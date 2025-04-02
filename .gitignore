@@ -1,0 +1,28 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment directories
+venv/
+env/
+.venv/
+ENV/
+pip-freeze.txt
+*.egg-info/
+dist/
+build/
+
+# Configuration files (DO NOT COMMIT REAL CREDENTIALS)
+config/zerodha_credentials.csv
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# IDE configuration files
+.idea/
+.vscode/
+
+# Log files
+*.log
