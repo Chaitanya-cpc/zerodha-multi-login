@@ -3,7 +3,7 @@ Zerodha Multi-Account Login Script using Selenium and Threading
 
 This script automates the login process for multiple Zerodha accounts simultaneously
 using Selenium and Python's threading module. It reads credentials from a CSV file
-and handles TOTP generation if a secret key is provided.
+and handles TOTP generation if a secret key is provided or directly reads the TOTP from credentials.
 
 Please refer to the main README.md for setup and usage instructions.
 """
