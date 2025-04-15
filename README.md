@@ -9,8 +9,9 @@ An automated tool for logging into multiple Zerodha accounts simultaneously. Thi
 - **Multi-Account Support**: Log into multiple Zerodha accounts simultaneously
 - **TOTP Support**: Automatically generates time-based one-time passwords for 2FA
 - **Rich Terminal UI**: Colorful, informative terminal interface with progress tracking
-- **Parallel Processing**: Option to run login sessions in parallel for faster execution
-- **Error Handling**: Comprehensive error detection with automatic screenshots
+- **Parallel Processing**: All browser windows open simultaneously for faster login
+- **Selective Login**: Choose which accounts to log in to via command line or interactive selection
+- **Comprehensive Logging**: Detailed logs with timestamps, saved to file for later reference
 - **Headless Mode**: Option to run in headless mode for automated scenarios
 
 ## Installation
@@ -52,27 +53,75 @@ python src/auto_login.py
 
 ### Command-line Options
 
-- `-c, --credentials`: Path to credentials CSV file (default: config/zerodha_credentials.csv)
+#### Input/Output Options:
+- `-c, --credentials PATH`: Path to credentials CSV file
+- `--no-log-file`: Disable logging to file
+- `--log-dir DIR`: Directory to store log files
+
+#### Display Options:
 - `-v, --verbose`: Enable verbose output for detailed logging
+- `--debug`: Show detailed error information when issues occur
+
+#### Execution Options:
 - `-y, --yes`: Skip confirmation prompt and proceed automatically
-- `-p, --parallel`: Run login sessions in parallel instead of sequentially
+- `-p, --parallel`: Run login sessions in parallel (default behavior)
 - `--headless`: Run browsers in headless mode (no GUI)
+
+#### Account Selection:
+- `--accounts LIST`: Comma-separated list of account usernames to login (e.g. 'AB1234,CD5678')
+- `-i, --interactive`: Start in interactive mode to select accounts
 
 ### Examples
 
-Login with custom credentials file:
+Login to all accounts:
 ```bash
-python src/auto_login.py -c /path/to/your/credentials.csv
+python src/auto_login.py
 ```
 
-Login with verbose output and parallel processing:
+Login to specific accounts only:
 ```bash
-python src/auto_login.py -v -p
+python src/auto_login.py --accounts AB1234,CD5678
+```
+
+Interactive account selection:
+```bash
+python src/auto_login.py -i
+```
+
+Login with verbose output and custom credentials file:
+```bash
+python src/auto_login.py -v -c /path/to/your/credentials.csv
 ```
 
 Automate the process without confirmation:
 ```bash
 python src/auto_login.py -y
+```
+
+## Interactive Mode
+
+The interactive mode allows you to select specific accounts to log in to. When you run the script with the `-i` flag, you'll be presented with a menu of options:
+
+1. **All**: Login to all accounts in the credentials file
+2. **Specific**: Choose individual accounts by number
+3. **Range**: Select a range of accounts by specifying start and end numbers
+4. **None**: Exit without logging into any accounts
+
+For example:
+```
+python src/auto_login.py -i
+```
+
+## Logs
+
+Logs are saved to the `logs` directory with timestamped filenames. Each log contains:
+- Timestamps for each event
+- Account-specific information
+- Success/failure status for login attempts
+
+To disable file logging:
+```
+python src/auto_login.py --no-log-file
 ```
 
 ## Security Considerations
@@ -85,7 +134,8 @@ python src/auto_login.py -y
 
 - If you encounter issues with the Chrome driver, try updating Chrome to the latest version.
 - If 2FA fails, verify that your TOTP secret key is correct or try using a PIN instead.
-- For detailed debugging, use the `-v` flag to enable verbose logging.
+- For detailed debugging, use the `-v` flag for verbose logging.
+- Check the log files in the `logs` directory for more information.
 
 ## License
 
