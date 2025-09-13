@@ -81,6 +81,7 @@ class Config:
     CSV_USERNAME_HEADER = "Username"
     CSV_PASSWORD_HEADER = "Password"
     CSV_2FA_HEADER = "PIN/TOTP Secret"
+    CSV_STATUS_HEADER = "Status"
     REQUIRED_CSV_HEADERS = [CSV_USERNAME_HEADER, CSV_PASSWORD_HEADER]
     
     # Selenium Locators
@@ -217,12 +218,15 @@ class TerminalUI:
         table.add_column("Username", style="value")
         table.add_column("2FA Method", style="status.running")
         table.add_column("Status", style="status.pending")
+        table.add_column("Active", style="status.success")
         
         for i, account in enumerate(accounts_data, start=1):
             username = account.get(Config.CSV_USERNAME_HEADER, "N/A")
             pin_or_totp = account.get(Config.CSV_2FA_HEADER, "")
+            status = account.get(Config.CSV_STATUS_HEADER, "1")
             two_fa_type = "TOTP" if len(pin_or_totp) > 8 and pin_or_totp.isalnum() and not pin_or_totp.isdigit() else "PIN" if pin_or_totp else "None"
-            table.add_row(str(i), username, two_fa_type, "Pending")
+            active_status = "✓" if status == "1" else "✗"
+            table.add_row(str(i), username, two_fa_type, "Pending", active_status)
         
         self.console.print(table)
         self.console.print(f"[subtitle]Total accounts: {len(accounts_data)}[/subtitle]")
@@ -343,10 +347,19 @@ class CredentialManager:
                     username = row.get(Config.CSV_USERNAME_HEADER, "").strip()
                     password = row.get(Config.CSV_PASSWORD_HEADER, "").strip()
                     pin_or_totp = row.get(Config.CSV_2FA_HEADER, "").strip()
+                    status = row.get(Config.CSV_STATUS_HEADER, "").strip()
                     
                     if username and password:
+                        # Check if status column exists and filter by status "1"
+                        if Config.CSV_STATUS_HEADER in row:
+                            if status != "1":
+                                self.ui.verbose_log(f"Skipped account {username} - status is '{status}' (not '1')", "warning")
+                                continue
+                        
                         if Config.CSV_2FA_HEADER not in row: 
                             row[Config.CSV_2FA_HEADER] = ''
+                        if Config.CSV_STATUS_HEADER not in row:
+                            row[Config.CSV_STATUS_HEADER] = ''
                         accounts_data.append(row)
                         self.ui.verbose_log(f"Added account: {username}", "success")
                     else:
@@ -370,7 +383,7 @@ class CredentialManager:
             try:
                 with open(self.credentials_file, 'w', newline='', encoding='utf-8') as f:
                     writer = csv.writer(f)
-                    writer.writerow(Config.REQUIRED_CSV_HEADERS + [Config.CSV_2FA_HEADER])
+                    writer.writerow(Config.REQUIRED_CSV_HEADERS + [Config.CSV_2FA_HEADER, Config.CSV_STATUS_HEADER])
                 self.ui.log(f"Created new credentials file: {self.credentials_file}", "success")
             except Exception as e:
                 self.ui.log(f"Failed to create credentials file: {e}", "error")
@@ -413,7 +426,8 @@ class CredentialManager:
                     "user_id": account[Config.CSV_USERNAME_HEADER],
                     "password": account[Config.CSV_PASSWORD_HEADER],
                     "pin": account.get(Config.CSV_2FA_HEADER, ""),
-                    "totp_secret": account.get(Config.CSV_2FA_HEADER, "")
+                    "totp_secret": account.get(Config.CSV_2FA_HEADER, ""),
+                    "status": account.get(Config.CSV_STATUS_HEADER, "1")
                 }
         
         return None
@@ -424,7 +438,7 @@ class CredentialManager:
         
         # Read existing data
         all_accounts = []
-        headers = Config.REQUIRED_CSV_HEADERS + [Config.CSV_2FA_HEADER]
+        headers = Config.REQUIRED_CSV_HEADERS + [Config.CSV_2FA_HEADER, Config.CSV_STATUS_HEADER]
         
         try:
             # Try to read existing data
@@ -445,6 +459,7 @@ class CredentialManager:
                 account[Config.CSV_USERNAME_HEADER] = credentials.get("user_id", account_id)
                 account[Config.CSV_PASSWORD_HEADER] = credentials.get("password", "")
                 account[Config.CSV_2FA_HEADER] = credentials.get("pin", credentials.get("totp_secret", ""))
+                account[Config.CSV_STATUS_HEADER] = credentials.get("status", "1")  # Default to "1" if not specified
                 account_updated = True
                 break
         
@@ -453,7 +468,8 @@ class CredentialManager:
             new_account = {
                 Config.CSV_USERNAME_HEADER: credentials.get("user_id", account_id),
                 Config.CSV_PASSWORD_HEADER: credentials.get("password", ""),
-                Config.CSV_2FA_HEADER: credentials.get("pin", credentials.get("totp_secret", ""))
+                Config.CSV_2FA_HEADER: credentials.get("pin", credentials.get("totp_secret", "")),
+                Config.CSV_STATUS_HEADER: credentials.get("status", "1")  # Default to "1" if not specified
             }
             all_accounts.append(new_account)
         
@@ -475,7 +491,7 @@ class CredentialManager:
         """Delete credentials for a specific account."""
         # Read existing data
         all_accounts = []
-        headers = Config.REQUIRED_CSV_HEADERS + [Config.CSV_2FA_HEADER]
+        headers = Config.REQUIRED_CSV_HEADERS + [Config.CSV_2FA_HEADER, Config.CSV_STATUS_HEADER]
         
         try:
             # Try to read existing data
@@ -717,7 +733,7 @@ class LoginSession:
             # Handle 2FA if needed
             pin_or_totp = self.credentials.get(Config.CSV_2FA_HEADER, '')
             two_fa_success = self.browser_manager.handle_two_factor_auth(wait, pin_or_totp, self.username)
-            
+
             if two_fa_success:
                 # Since 2FA is successful, we can immediately report login success
                 self.ui.log(f"Login completed successfully", "success", self.username)
@@ -856,6 +872,7 @@ class ZerodhaLoginBot:
     
     def _select_accounts_interactively(self, accounts_data: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """Allow interactive selection of accounts."""
+        self.ui.clear_screen()
         self.ui.console.print(Panel(
             "[title]Interactive Account Selection[/title]\n\n"
             "Select which accounts you want to log in to.",
@@ -868,19 +885,22 @@ class ZerodhaLoginBot:
         account_table.add_column("#", style="cyan", justify="center")
         account_table.add_column("Username", style="value")
         account_table.add_column("2FA Method", style="status.running")
+        account_table.add_column("Active", style="status.success")
         
         for i, account in enumerate(accounts_data, start=1):
             username = account.get(Config.CSV_USERNAME_HEADER, "N/A")
             pin_or_totp = account.get(Config.CSV_2FA_HEADER, "")
+            status = account.get(Config.CSV_STATUS_HEADER, "1")
             two_fa_type = "TOTP" if len(pin_or_totp) > 8 and pin_or_totp.isalnum() and not pin_or_totp.isdigit() else "PIN" if pin_or_totp else "None"
-            account_table.add_row(str(i), username, two_fa_type)
-            
+            active_status = "✓" if status == "1" else "✗"
+            account_table.add_row(str(i), username, two_fa_type, active_status)
+        
         self.ui.console.print(account_table)
         
         # Ask selection method
         selection_mode = Prompt.ask(
             "Selection mode", 
-            choices=["all", "specific", "range", "none"], 
+            choices=["all", "specific", "none"], 
             default="all"
         )
         
@@ -905,26 +925,17 @@ class ZerodhaLoginBot:
                 for idx in indices:
                     if 1 <= idx <= len(accounts_data):
                         selected_accounts.append(accounts_data[idx-1])
+                        self.ui.log(f"Selected account #{idx}: {accounts_data[idx-1].get(Config.CSV_USERNAME_HEADER)}", "success")
                     else:
                         self.ui.log(f"Invalid account number: {idx}", "warning")
             except ValueError:
-                self.ui.log("Invalid input. Please enter comma-separated numbers.", "error")
-                
-        elif selection_mode == "range":
-            try:
-                start = IntPrompt.ask("Start from account #", default=1)
-                end = IntPrompt.ask("End at account #", default=len(accounts_data))
-                
-                start = max(1, min(start, len(accounts_data)))
-                end = max(start, min(end, len(accounts_data)))
-                
-                for idx in range(start, end + 1):
-                    selected_accounts.append(accounts_data[idx-1])
-                    username = accounts_data[idx-1].get(Config.CSV_USERNAME_HEADER, "Unknown")
-                    self.ui.log(f"Selected account #{idx}: {username}", "success")
-            except ValueError:
-                self.ui.log("Invalid input. Please enter numbers.", "error")
+                self.ui.log("Invalid input. Using all accounts as default.", "warning")
+                return accounts_data
         
+        if not selected_accounts and selection_mode == "specific":
+            self.ui.log("No valid accounts selected. Using all accounts as default.", "warning")
+            return accounts_data
+            
         self.ui.log(f"Selected {len(selected_accounts)} accounts", "info")
         return selected_accounts
     
@@ -1294,6 +1305,9 @@ class ZerodhaDashboard:
         total_accounts = len(accounts)
         self.ui.print_info(f"Logging in to {total_accounts} accounts...")
         
+        # Create browser manager
+        browser_manager = BrowserManager(self.ui, headless=self.browser_headless)
+        
         # Create a progress display
         with Progress(
             SpinnerColumn(),
@@ -1312,16 +1326,31 @@ class ZerodhaDashboard:
                 account_task = progress.add_task(f"[yellow]Login {account}", total=1)
                 
                 try:
-                    # Initialize the Zerodha Login for this account
-                    login_bot = ZerodhaLogin(
-                        account_id=account,
-                        credential_manager=self.credential_manager,
-                        headless=self.browser_headless,
-                        ui=self.ui
+                    # Get account credentials
+                    credentials = self.credential_manager.get_credentials(account)
+                    
+                    if not credentials:
+                        progress.update(account_task, description=f"[red]✗ {account} - No credentials found", completed=1)
+                        failed += 1
+                        progress.update(overall_task, advance=1)
+                        continue
+                    
+                    # Create CSV-like credentials dict that LoginSession expects
+                    login_credentials = {
+                        Config.CSV_USERNAME_HEADER: credentials.get("user_id", ""),
+                        Config.CSV_PASSWORD_HEADER: credentials.get("password", ""),
+                        Config.CSV_2FA_HEADER: credentials.get("pin", credentials.get("totp_secret", ""))
+                    }
+                    
+                    # Create the login session
+                    session = LoginSession(
+                        login_credentials, 
+                        self.ui, 
+                        browser_manager
                     )
                     
                     # Perform login
-                    result = login_bot.login()
+                    result = session.execute()
                     
                     if result:
                         progress.update(account_task, description=f"[green]✓ {account} - Success", completed=1)
@@ -1682,13 +1711,15 @@ class ZerodhaDashboard:
                     new_password = Prompt.ask("Password", password=True, default="")
                     new_pin = Prompt.ask("PIN", password=True, default="")
                     new_totp_secret = Prompt.ask("TOTP Secret (leave empty if not changed)", default=current_creds.get("totp_secret", ""))
+                    new_status = Prompt.ask("Status (1=active, 0=inactive)", default=current_creds.get("status", "1"))
                     
                     # Update credentials
                     updated_creds = {
                         "user_id": new_user_id,
                         "password": new_password if new_password else current_creds.get("password", ""),
                         "pin": new_pin if new_pin else current_creds.get("pin", ""),
-                        "totp_secret": new_totp_secret if new_totp_secret else current_creds.get("totp_secret", "")
+                        "totp_secret": new_totp_secret if new_totp_secret else current_creds.get("totp_secret", ""),
+                        "status": new_status
                     }
                     
                     self.credential_manager.save_credentials(account_id, updated_creds)
@@ -1719,13 +1750,15 @@ class ZerodhaDashboard:
         password = Prompt.ask("Password", password=True)
         pin = Prompt.ask("PIN", password=True)
         totp_secret = Prompt.ask("TOTP Secret (optional)", default="")
+        status = Prompt.ask("Status (1=active, 0=inactive)", default="1")
         
         # Save credentials
         creds = {
             "user_id": user_id,
             "password": password,
             "pin": pin,
-            "totp_secret": totp_secret
+            "totp_secret": totp_secret,
+            "status": status
         }
         
         try:
@@ -1881,6 +1914,11 @@ def main():
     
     args = parser.parse_args()
     
+    # Check if no specific arguments were provided (like when double-clicking)
+    # If so, automatically login to all accounts with yes flag
+    if len(sys.argv) == 1:  # Only the script name, no arguments
+        args.yes = True  # Skip confirmation
+    
     # Initialize UI
     ui = TerminalUI(verbose=args.verbose, log_to_file=not args.no_log_file)
     
@@ -1909,6 +1947,10 @@ def main():
                 login_bot.credential_manager.set_credentials_file(args.credentials)
             login_bot.run()
         
+        # Keep terminal open when double-clicked
+        if len(sys.argv) == 1:
+            input("\nPress Enter to exit...")
+        
     except KeyboardInterrupt:
         ui.print_warning("\nOperation cancelled by user")
         sys.exit(1)
@@ -1917,6 +1959,11 @@ def main():
         if args.verbose:
             import traceback
             ui.console.print_exception()
+        
+        # Keep terminal open when double-clicked and there's an error
+        if len(sys.argv) == 1:
+            input("\nPress Enter to exit...")
+        
         sys.exit(1)
 
 if __name__ == '__main__':

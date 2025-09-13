@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Trading Algo",
+  "version": "2.0.7",
+  "description": "Trading Algo PNL, Payoff, Consolidated F&O, Index Viewer for Zerodha",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://kite.zerodha.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://kite.zerodha.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_title": "Trading Algo"
+  }
+}
