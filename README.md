@@ -312,33 +312,33 @@ python src/auto_login.py --group "Trading Team"
 
 #### Input/Output
 
-| Option | Description |
-|--------|-------------|
+| Option                   | Description                  |
+| ------------------------ | ---------------------------- |
 | `-c, --credentials PATH` | Path to credentials CSV file |
-| `--no-log-file` | Disable logging to file |
-| `--log-dir DIR` | Directory to store log files |
+| `--no-log-file`          | Disable logging to file      |
+| `--log-dir DIR`          | Directory to store log files |
 
 #### Display
 
-| Option | Description |
-|--------|-------------|
-| `-v, --verbose` | Enable verbose output for debugging |
-| `-q, --quiet` | Disable console output (not recommended) |
+| Option          | Description                              |
+| --------------- | ---------------------------------------- |
+| `-v, --verbose` | Enable verbose output for debugging      |
+| `-q, --quiet`   | Disable console output (not recommended) |
 
 #### Execution
 
-| Option | Description |
-|--------|-------------|
-| `-y, --yes` | Skip confirmation prompt (auto-proceed) |
-| `--headless` | Run browsers in headless mode (no GUI) |
+| Option       | Description                             |
+| ------------ | --------------------------------------- |
+| `-y, --yes`  | Skip confirmation prompt (auto-proceed) |
+| `--headless` | Run browsers in headless mode (no GUI)  |
 
 #### Account Selection
 
-| Option | Description |
-|--------|-------------|
-| `--accounts LIST` | Comma-separated account usernames |
+| Option              | Description                        |
+| ------------------- | ---------------------------------- |
+| `--accounts LIST`   | Comma-separated account usernames  |
 | `-i, --interactive` | Interactive account selection menu |
-| `--group NAME` | Login to account group by name |
+| `--group NAME`      | Login to account group by name     |
 
 ### Examples
 
@@ -410,10 +410,10 @@ class Config:
     CREDENTIALS_FILE = os.path.join(CONFIG_DIR, 'zerodha_credentials.csv')
     GROUPS_CONFIG_FILE = os.path.join(CONFIG_DIR, 'account_groups.json')
     LOGS_DIR = os.path.join(BASE_DIR, 'logs')
-    
+
     # URLs
     ZERODHA_LOGIN_URL = "https://kite.zerodha.com/"
-    
+
     # Timeouts and Delays (seconds)
     WEBDRIVER_WAIT_TIMEOUT = 30
     SHORT_DELAY = 0.75
@@ -422,14 +422,14 @@ class Config:
     POST_2FA_KEY_DELAY = 1.0
     POST_FINAL_SUBMIT_DELAY = 0.75
     BROWSER_LAUNCH_DELAY = 2.0
-    
+
     # CSV Headers
     CSV_USERNAME_HEADER = "Username"
     CSV_PASSWORD_HEADER = "Password"
     CSV_2FA_HEADER = "PIN/TOTP Secret"
     CSV_STATUS_HEADER = "Status"
     REQUIRED_CSV_HEADERS = [CSV_USERNAME_HEADER, CSV_PASSWORD_HEADER]
-    
+
     # Selenium Locators
     USER_ID_INPUT_LOCATOR = (By.ID, "userid")
     PASSWORD_INPUT_LOCATOR = (By.ID, "password")
@@ -439,6 +439,7 @@ class Config:
 ```
 
 **Responsibilities:**
+
 - Define all file paths and directories
 - Configure timeouts and delays for Selenium operations
 - Define CSV file structure and headers
@@ -466,6 +467,7 @@ class TerminalUI:
 ```
 
 **Features:**
+
 - Beautiful ASCII art banners with Rich panels
 - Color-coded log messages with timestamps
 - Formatted tables for account summaries
@@ -474,6 +476,7 @@ class TerminalUI:
 - Theme customization with Rich themes
 
 **Log Levels:**
+
 - `info` - General information (blue)
 - `success` - Successful operations (green)
 - `warning` - Warning messages (yellow)
@@ -499,6 +502,7 @@ class CredentialManager:
 ```
 
 **Key Features:**
+
 - Status-based filtering (only processes accounts with status="1")
 - Credential caching for performance
 - CSV file parsing with error handling
@@ -506,6 +510,7 @@ class CredentialManager:
 - Automatic file path resolution
 
 **Data Flow:**
+
 ```
 CSV File → CSV Reader → Status Filter → Cache → Return List
 ```
@@ -528,6 +533,7 @@ class BrowserManager:
 ```
 
 **Key Features:**
+
 - Chrome WebDriver initialization with custom options
 - Headless mode support
 - Automatic credential form filling
@@ -537,6 +543,7 @@ class BrowserManager:
 - Detach option to keep browsers open
 
 **2FA Handling Logic:**
+
 ```
 PIN/TOTP Secret Input
     ↓
@@ -567,6 +574,7 @@ class LoginSession:
 ```
 
 **Login Workflow:**
+
 ```
 1. Initialize BrowserManager
 2. Setup Chrome Driver
@@ -580,6 +588,7 @@ class LoginSession:
 ```
 
 **Status Tracking:**
+
 - `pending` - Initial state
 - `in_progress` - Login process started
 - `success` - Login completed successfully
@@ -604,6 +613,7 @@ class ZerodhaLoginBot:
 ```
 
 **Execution Flow:**
+
 ```
 1. Initialize UI and managers
 2. Display banner
@@ -617,6 +627,7 @@ class ZerodhaLoginBot:
 ```
 
 **Parallel Processing:**
+
 - Uses `ThreadPoolExecutor` for concurrent execution
 - Each account runs in its own thread
 - All browser windows open simultaneously
@@ -640,6 +651,7 @@ class AccountGroup:
 ```
 
 **Validation:**
+
 - Checks for empty name
 - Validates account list is not empty
 - Ensures account names are valid
@@ -665,6 +677,7 @@ class AccountGroupManager:
 ```
 
 **Persistence:**
+
 - JSON file storage (`config/account_groups.json`)
 - Atomic file operations
 - Error handling and validation
@@ -680,7 +693,7 @@ class AccountGroupManager:
 
 ```python
 class ZerodhaDashboard:
-    def __init__(self, ui: TerminalUI, credential_manager: CredentialManager, 
+    def __init__(self, ui: TerminalUI, credential_manager: CredentialManager,
                  group_manager: AccountGroupManager, headless: bool = False)
     def run(self) -> None
     def _show_main_menu(self) -> None
@@ -697,6 +710,7 @@ class ZerodhaDashboard:
 ```
 
 **Dashboard Features:**
+
 - Main menu navigation
 - Account CRUD operations
 - Group CRUD operations
@@ -705,6 +719,7 @@ class ZerodhaDashboard:
 - Real-time updates
 
 **Menu Structure:**
+
 ```
 Main Menu
 ├── Manage Accounts
@@ -727,6 +742,7 @@ Main Menu
 **Purpose:** Entry point for the application, handles command-line arguments and initialization.
 
 **Key Logic:**
+
 ```python
 def main():
     1. Parse command-line arguments
@@ -748,6 +764,7 @@ def main():
 **Purpose:** Multi-account Zerodha login automation with full feature set.
 
 **Features:**
+
 - Parallel account login processing
 - Status-based filtering
 - Interactive dashboard mode
@@ -757,11 +774,13 @@ def main():
 - Error handling with screenshots
 
 **Usage:**
+
 ```bash
 python src/auto_login.py [options]
 ```
 
 **Key Classes:**
+
 - `Config` - Configuration management
 - `TerminalUI` - Terminal interface
 - `CredentialManager` - Credential handling
@@ -776,6 +795,7 @@ python src/auto_login.py [options]
 **Purpose:** Dedicated script for HDN374 company account with special features.
 
 **Features:**
+
 - Bypasses status filtering (always processes HDN374)
 - Chrome extension support (Trading Algo extension)
 - Beautiful terminal UI with enhanced banners
@@ -783,17 +803,20 @@ python src/auto_login.py [options]
 - Profile-based extension loading
 
 **Usage:**
+
 ```bash
 python open_Company_Account.py
 ```
 
 **Key Differences:**
+
 - Targets single account (HDN374)
 - Loads Chrome extensions from user profile
 - Enhanced UI for double-click execution
 - Status-independent processing
 
 **Special Features:**
+
 - Chrome profile copying for extension loading
 - Anti-detection measures for automated browsers
 - Enhanced error messages and status displays
@@ -803,6 +826,7 @@ python open_Company_Account.py
 **Purpose:** Automated multi-platform login flow (Zerodha → AlgoTest).
 
 **Features:**
+
 - Zerodha BU0542 account login
 - AlgoTest tab opening in same browser
 - AlgoTest login automation
@@ -811,17 +835,20 @@ python open_Company_Account.py
 - Error debugging with page source capture
 
 **Usage:**
+
 ```bash
 python "CronJob Algotest Login/algotest_login.py"
 ```
 
 **Key Classes:**
+
 - `Config` - Configuration (Zerodha and AlgoTest URLs, XPaths)
 - `AlgoTestUI` - Terminal interface
 - `CredentialManager` - Dual credential management (Zerodha + AlgoTest)
 - `AlgoTestBrowserManager` - Browser automation with multi-platform support
 
 **Process Flow:**
+
 ```
 1. Read Zerodha credentials (BU0542)
 2. Setup Chrome browser
@@ -890,6 +917,7 @@ algotest_page_source.html
 **Problem:** ChromeDriver not found or version mismatch
 
 **Solution:**
+
 ```bash
 # Check Chrome version
 chrome --version
@@ -907,6 +935,7 @@ See [DRIVERS/README_DRIVERS.md](DRIVERS/README_DRIVERS.md) for detailed instruct
 **Problem:** Login fails during 2FA step
 
 **Solutions:**
+
 - Verify TOTP secret is correct (Base32 format)
 - Check if using PIN vs TOTP (PIN should be 6 digits)
 - Ensure system time is synchronized (critical for TOTP)
@@ -918,6 +947,7 @@ See [DRIVERS/README_DRIVERS.md](DRIVERS/README_DRIVERS.md) for detailed instruct
 **Problem:** Script times out waiting for elements
 
 **Solutions:**
+
 - Increase `WEBDRIVER_WAIT_TIMEOUT` in Config class
 - Check internet connection stability
 - Verify Zerodha website is accessible
@@ -929,6 +959,7 @@ See [DRIVERS/README_DRIVERS.md](DRIVERS/README_DRIVERS.md) for detailed instruct
 **Problem:** Account not processed or not found
 
 **Solutions:**
+
 - Check CSV file format (headers must match exactly)
 - Verify account status is "1" (if using status filtering)
 - Ensure credentials are correct
@@ -940,6 +971,7 @@ See [DRIVERS/README_DRIVERS.md](DRIVERS/README_DRIVERS.md) for detailed instruct
 **Problem:** Chrome browser doesn't launch
 
 **Solutions:**
+
 - Check Chrome installation
 - Verify ChromeDriver is in PATH
 - Check for Chrome updates
@@ -949,17 +981,20 @@ See [DRIVERS/README_DRIVERS.md](DRIVERS/README_DRIVERS.md) for detailed instruct
 ### Debug Mode
 
 **Enable verbose logging:**
+
 ```bash
 python src/auto_login.py -v
 ```
 
 **Check log files:**
+
 ```bash
 ls -la logs/
 cat logs/zerodha_login_YYYYMMDD_HHMMSS.log
 ```
 
 **Common Debug Steps:**
+
 1. Run with `-v` flag for detailed output
 2. Check log files in `logs/` directory
 3. Review screenshots if login fails
