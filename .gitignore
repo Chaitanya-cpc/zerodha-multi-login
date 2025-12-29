@@ -15,6 +15,7 @@ build/
 
 # Configuration files (DO NOT COMMIT REAL CREDENTIALS)
 config/zerodha_credentials.csv
+CronJob Algotest Login/algotest_credentials.json
 
 # Operating System files
 .DS_Store
