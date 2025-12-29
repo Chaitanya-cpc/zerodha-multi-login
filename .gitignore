@@ -26,3 +26,6 @@ Thumbs.db
 
 # Log files
 *.log
+
+# Debug files
+algotest_page_source.html
