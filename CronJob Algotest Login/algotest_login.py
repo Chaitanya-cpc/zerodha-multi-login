@@ -23,6 +23,7 @@ from rich.theme import Theme
 # Selenium Imports
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
@@ -44,7 +45,14 @@ class Config:
     CREDENTIALS_FILE = os.path.join(CONFIG_DIR, 'zerodha_credentials.csv')
     ALGOTEST_CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), 'algotest_credentials.json')
     
-    # Target Accounts
+    # Account Configuration - Set to 1 to enable, 0 to disable
+    # Accounts will be processed sequentially if multiple are enabled
+    ACCOUNTS_CONFIG = {
+        "BU0542": 1,  # Set to 1 to enable, 0 to disable
+        "HDN374": 1,  # Set to 1 to enable, 0 to disable
+    }
+    
+    # Target Accounts (legacy - kept for backward compatibility)
     ZERODHA_ACCOUNT = "BU0542"
     
     # URLs
@@ -77,6 +85,15 @@ class Config:
     ALGOTEST_PHONE_INPUT_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div[3]/form/div[1]/input")  # Phone number input
     ALGOTEST_PASSWORD_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div[3]/form/div[2]/div/input")  # Password input
     ALGOTEST_SUBMIT_BUTTON_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div[3]/form/button")  # Submit button after entering credentials
+    
+    # AlgoTest Post-Login Locators
+    ALGOTEST_BROKER_SETUP_BUTTON_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/nav/div[2]/div[1]/a[2]")  # Broker setup button
+    ALGOTEST_UNLISTED_BROKER_LOCATOR = (By.XPATH, "//p[contains(text(), 'Unlisted Broker')]")  # Unlisted broker text (by text content)
+    ALGOTEST_UNLISTED_BROKER_FALLBACK_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[1]/div[1]/div[1]/p")  # Fallback locator for unlisted broker
+    
+    # Account-specific login button locators (after unlisted broker)
+    ALGOTEST_LOGIN_BUTTON_BU0542_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[3]/div[2]/div[1]/div/div/div[3]/button")  # Login button for BU0542
+    ALGOTEST_LOGIN_BUTTON_HDN374_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[3]/div[2]/div[2]/div/div/div[3]/button")  # Login button for HDN374
 
 # ==========================================================================
 # --- Terminal UI ---
@@ -202,9 +219,9 @@ class CredentialManager:
             self.ui.log(f"Error reading AlgoTest credentials: {e}", "error")
             return None
     
-    def get_zerodha_credentials(self) -> Optional[Dict[str, str]]:
-        """Get credentials for Zerodha BU0542 account."""
-        self.ui.log(f"Reading Zerodha credentials for {Config.ZERODHA_ACCOUNT}")
+    def get_zerodha_credentials(self, account_id: str) -> Optional[Dict[str, str]]:
+        """Get credentials for a specific Zerodha account."""
+        self.ui.log(f"Reading Zerodha credentials for {account_id}")
         
         try:
             with open(self.credentials_file, mode='r', newline='', encoding='utf-8-sig') as file:
@@ -212,15 +229,15 @@ class CredentialManager:
                 
                 for row in reader:
                     username = row.get(Config.CSV_USERNAME_HEADER, "").strip()
-                    if username == Config.ZERODHA_ACCOUNT:
+                    if username == account_id:
                         password = row.get(Config.CSV_PASSWORD_HEADER, "").strip()
                         pin_or_totp = row.get(Config.CSV_2FA_HEADER, "").strip()
                         
                         if not password:
-                            self.ui.log(f"No password found for {Config.ZERODHA_ACCOUNT}", "error")
+                            self.ui.log(f"No password found for {account_id}", "error")
                             return None
                         
-                        self.ui.log(f"Found Zerodha credentials for {Config.ZERODHA_ACCOUNT}", "success")
+                        self.ui.log(f"Found Zerodha credentials for {account_id}", "success")
                         return {
                             "user_id": username,
                             "password": password,
@@ -228,7 +245,7 @@ class CredentialManager:
                             "totp_secret": pin_or_totp
                         }
                 
-                self.ui.log(f"Account {Config.ZERODHA_ACCOUNT} not found in credentials file", "error")
+                self.ui.log(f"Account {account_id} not found in credentials file", "error")
                 return None
                 
         except FileNotFoundError:
@@ -416,38 +433,124 @@ class AlgoTestBrowserManager:
             self.ui.log(f"AlgoTest login failed: {e}", "error")
             traceback.print_exc()
             return False
+    
+    def post_login_steps(self, driver: webdriver.Chrome, account_id: str) -> bool:
+        """Perform post-login steps: remove ads, navigate to broker setup, select unlisted broker, and click account-specific login button."""
+        self.ui.log("Starting post-login steps")
+        
+        try:
+            wait = WebDriverWait(driver, Config.WEBDRIVER_WAIT_TIMEOUT)
+            
+            # Step 1: Press Escape key to remove ads
+            self.ui.log("Pressing Escape key to remove ads...")
+            body = driver.find_element(By.TAG_NAME, "body")
+            body.send_keys(Keys.ESCAPE)
+            time.sleep(Config.SHORT_DELAY)
+            self.ui.log("Escape key pressed", "success")
+            
+            # Step 2: Click broker setup button
+            self.ui.log("Looking for broker setup button...")
+            broker_setup_button = wait.until(EC.element_to_be_clickable(Config.ALGOTEST_BROKER_SETUP_BUTTON_LOCATOR))
+            self.ui.log("Found broker setup button", "success")
+            broker_setup_button.click()
+            self.ui.log("Clicked broker setup button", "success")
+            time.sleep(Config.SHORT_DELAY)
+            
+            # Step 3: Click unlisted broker text (try by text first, then fallback to XPath)
+            self.ui.log("Looking for unlisted broker text...")
+            unlisted_broker = None
+            
+            try:
+                # First, try to find by text content
+                unlisted_broker = wait.until(EC.element_to_be_clickable(Config.ALGOTEST_UNLISTED_BROKER_LOCATOR))
+                element_text = unlisted_broker.text.strip()
+                if "Unlisted Broker" in element_text:
+                    self.ui.log(f"Found unlisted broker text by content: '{element_text}'", "success")
+                else:
+                    self.ui.log(f"Found element but text doesn't match: '{element_text}'. Trying fallback...", "warning")
+                    unlisted_broker = None
+            except TimeoutException:
+                self.ui.log("Could not find unlisted broker by text content. Trying fallback XPath...", "warning")
+                unlisted_broker = None
+            
+            # If not found by text, try fallback XPath
+            if unlisted_broker is None:
+                try:
+                    self.ui.log("Trying fallback XPath for unlisted broker...")
+                    unlisted_broker = wait.until(EC.element_to_be_clickable(Config.ALGOTEST_UNLISTED_BROKER_FALLBACK_LOCATOR))
+                    self.ui.log("Found unlisted broker text using fallback XPath", "success")
+                except TimeoutException:
+                    self.ui.log("Failed to find unlisted broker text using both methods", "error")
+                    raise
+            
+            # Click the found element
+            unlisted_broker.click()
+            self.ui.log("Clicked unlisted broker text", "success")
+            time.sleep(Config.SHORT_DELAY)
+            
+            # Step 4: Click account-specific login button
+            if account_id == "BU0542":
+                login_button_locator = Config.ALGOTEST_LOGIN_BUTTON_BU0542_LOCATOR
+            elif account_id == "HDN374":
+                login_button_locator = Config.ALGOTEST_LOGIN_BUTTON_HDN374_LOCATOR
+            else:
+                self.ui.log(f"Unknown account ID: {account_id}. Skipping account-specific login button.", "warning")
+                return True
+            
+            self.ui.log(f"Looking for login button for {account_id}...")
+            account_login_button = wait.until(EC.element_to_be_clickable(login_button_locator))
+            self.ui.log(f"Found login button for {account_id}", "success")
+            account_login_button.click()
+            self.ui.log(f"Clicked login button for {account_id}", "success")
+            
+            # Wait 5 seconds for auto-login verification
+            self.ui.log("Waiting 5 seconds for auto-login verification...")
+            time.sleep(5.0)
+            self.ui.log("Auto-login verification wait completed", "success")
+            
+            self.ui.log("Post-login steps completed successfully", "success")
+            return True
+            
+        except TimeoutException as e:
+            self.ui.log(f"Timeout waiting for post-login elements: {e}", "error")
+            return False
+        except Exception as e:
+            self.ui.log(f"Post-login steps failed: {e}", "error")
+            traceback.print_exc()
+            return False
 
 # ==========================================================================
 # --- Main Application ---
 # ==========================================================================
 
-def main():
-    """Main entry point."""
-    ui = AlgoTestUI()
+def process_account(account_id: str, ui: AlgoTestUI, credential_manager: CredentialManager, browser_manager: AlgoTestBrowserManager) -> bool:
+    """Process a single account through the complete workflow."""
+    ui.console.print()
+    ui.console.print(Panel.fit(
+        f"[bold bright_magenta]🔄 Processing Account: [bold white]{account_id}[/bold white][/bold bright_magenta]",
+        border_style="bright_magenta",
+        padding=(1, 2)
+    ))
+    ui.console.print()
     
+    driver = None
     try:
-        ui.print_banner()
-        
-        # Initialize managers
-        credential_manager = CredentialManager(ui)
-        browser_manager = AlgoTestBrowserManager(ui)
-        
-        # Get Zerodha credentials
-        zerodha_credentials = credential_manager.get_zerodha_credentials()
+        # Get Zerodha credentials for this account
+        zerodha_credentials = credential_manager.get_zerodha_credentials(account_id)
         if not zerodha_credentials:
-            ui.log("Failed to get Zerodha credentials. Exiting.", "error")
-            sys.exit(1)
+            ui.log(f"Failed to get Zerodha credentials for {account_id}. Skipping.", "error")
+            return False
         
         # Setup browser
         driver = browser_manager.setup_driver()
         if not driver:
-            ui.log("Failed to setup browser. Exiting.", "error")
-            sys.exit(1)
+            ui.log(f"Failed to setup browser for {account_id}. Skipping.", "error")
+            return False
         
         # Step 1: Login to Zerodha
         ui.console.print()
         ui.console.print(Panel.fit(
-            "[bold bright_cyan]📋 STEP 1: Logging into Zerodha[/bold bright_cyan]",
+            f"[bold bright_cyan]📋 STEP 1: Logging into Zerodha ({account_id})[/bold bright_cyan]",
             border_style="bright_cyan",
             padding=(0, 2)
         ))
@@ -457,14 +560,15 @@ def main():
         if not zerodha_success:
             ui.console.print()
             ui.console.print(Panel.fit(
-                "[bold bright_red]❌ Zerodha Login Failed[/bold bright_red]\n\n"
+                f"[bold bright_red]❌ Zerodha Login Failed for {account_id}[/bold bright_red]\n\n"
                 "[dim]Please check the logs above for error details[/dim]",
                 border_style="bright_red",
                 padding=(1, 2)
             ))
             ui.console.print()
-            input("\nPress Enter to exit...")
-            sys.exit(1)
+            if driver:
+                driver.quit()
+            return False
         
         # Step 2: Open AlgoTest tab
         ui.console.print()
@@ -485,8 +589,9 @@ def main():
                 padding=(1, 2)
             ))
             ui.console.print()
-            input("\nPress Enter to exit...")
-            sys.exit(1)
+            if driver:
+                driver.quit()
+            return False
         
         # Step 3: Login to AlgoTest
         ui.console.print()
@@ -515,6 +620,21 @@ def main():
                 ))
                 ui.console.print()
                 ui.log("AlgoTest login completed successfully", "success")
+                
+                # Step 4: Post-login steps
+                ui.console.print()
+                ui.console.print(Panel.fit(
+                    "[bold bright_cyan]📋 STEP 4: Post-Login Steps[/bold bright_cyan]",
+                    border_style="bright_cyan",
+                    padding=(0, 2)
+                ))
+                ui.console.print()
+                
+                post_login_success = browser_manager.post_login_steps(driver, account_id)
+                if post_login_success:
+                    ui.log("Post-login steps completed successfully", "success")
+                else:
+                    ui.log("Post-login steps failed - continuing anyway", "warning")
             else:
                 ui.console.print(Panel.fit(
                     "[bold yellow]⚠️ AlgoTest Login Failed[/bold yellow]\n\n"
@@ -526,6 +646,9 @@ def main():
                 ui.console.print()
                 ui.log("AlgoTest login failed - you may need to login manually", "warning")
                 ui.log("Check algotest_page_source.html for page structure", "info")
+                if driver:
+                    driver.quit()
+                return False
         else:
             ui.console.print()
             ui.console.print(Panel.fit(
@@ -539,11 +662,88 @@ def main():
             ui.log("AlgoTest credentials not configured - please login manually", "warning")
             ui.log(f"Add credentials to: {Config.ALGOTEST_CREDENTIALS_FILE}", "info")
             ui.log("Browser window will remain open for manual login", "info")
+            if driver:
+                driver.quit()
+            return False
+        
+        # Close browser after completing all steps for this account
+        ui.log(f"Closing browser for {account_id} after completing all steps", "info")
+        if driver:
+            driver.quit()
         
         ui.console.print()
         ui.console.print(Panel.fit(
-            "[bold bright_green]✅ Process Completed Successfully![/bold bright_green]\n\n"
-            "[dim]Browser windows remain open for your use[/dim]",
+            f"[bold bright_green]✅ Account {account_id} Process Completed Successfully![/bold bright_green]",
+            border_style="bright_green",
+            padding=(1, 2)
+        ))
+        ui.console.print()
+        
+        return True
+        
+    except Exception as e:
+        ui.log(f"Error processing account {account_id}: {str(e)}", "error")
+        traceback.print_exc()
+        if driver:
+            try:
+                driver.quit()
+            except:
+                pass
+        return False
+
+def main():
+    """Main entry point."""
+    ui = AlgoTestUI()
+    
+    try:
+        ui.print_banner()
+        
+        # Get list of enabled accounts
+        enabled_accounts = [account_id for account_id, enabled in Config.ACCOUNTS_CONFIG.items() if enabled == 1]
+        
+        if not enabled_accounts:
+            ui.console.print()
+            ui.console.print(Panel.fit(
+                "[bold yellow]⚠️ No Accounts Enabled[/bold yellow]\n\n"
+                "[dim]Set at least one account to 1 in Config.ACCOUNTS_CONFIG[/dim]",
+                border_style="yellow",
+                padding=(1, 2)
+            ))
+            ui.console.print()
+            ui.log("No accounts enabled in configuration. Exiting.", "warning")
+            input("\nPress Enter to exit...")
+            sys.exit(0)
+        
+        ui.console.print()
+        ui.console.print(Panel.fit(
+            f"[bold bright_cyan]📋 Processing [bold white]{len(enabled_accounts)}[/bold white] Account(s)[/bold bright_cyan]\n\n"
+            f"[dim]Accounts: [bold white]{', '.join(enabled_accounts)}[/bold white][/dim]",
+            border_style="bright_cyan",
+            padding=(1, 2)
+        ))
+        ui.console.print()
+        
+        # Initialize managers
+        credential_manager = CredentialManager(ui)
+        browser_manager = AlgoTestBrowserManager(ui)
+        
+        # Process each enabled account sequentially
+        results = {}
+        for account_id in enabled_accounts:
+            success = process_account(account_id, ui, credential_manager, browser_manager)
+            results[account_id] = success
+            
+            # Add a small delay between accounts
+            if account_id != enabled_accounts[-1]:  # Not the last account
+                ui.log("Waiting before processing next account...", "info")
+                time.sleep(2.0)
+        
+        # Final summary
+        ui.console.print()
+        ui.console.print(Panel.fit(
+            "[bold bright_green]✅ All Accounts Processed![/bold bright_green]\n\n"
+            f"[dim]Results:[/dim]\n" + 
+            "\n".join([f"  [{'green' if results[acc] else 'red'}]●[/] {acc}: {'Success' if results[acc] else 'Failed'}" for acc in enabled_accounts]),
             border_style="bright_green",
             padding=(1, 2)
         ))
