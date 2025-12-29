@@ -182,28 +182,42 @@ class TerminalUI:
     
     def print_banner(self):
         """Display the application banner."""
-        # Cleaner, more compact banner
-        banner = """
-    ╭─────────────────────────────────────────────────────╮
-    │                                                     │
-    │   ███████╗███████╗██████╗  ██████╗ ██████╗ ██╗  ██╗ │
-    │   ╚══███╔╝██╔════╝██╔══██╗██╔═══██╗██╔══██╗██║  ██║ │
-    │     ███╔╝ █████╗  ██████╔╝██║   ██║██║  ██║███████║ │
-    │    ███╔╝  ██╔══╝  ██╔══██╗██║   ██║██║  ██║██╔══██║ │
-    │   ███████╗███████╗██║  ██║╚██████╔╝██████╔╝██║  ██║ │
-    │   ╚══════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝ │
-    │                                                     │
-    │   [title]Multi-Account Login Automation Bot[/title] │
-    │                                                     │
-    ╰─────────────────────────────────────────────────────╯
+        # Beautiful, enhanced banner with ASCII art
+        banner_text = """
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║                                                               ║
+    ║    ███████╗███████╗██████╗  ██████╗ ██████╗ ██╗  ██╗         ║
+    ║    ╚══███╔╝██╔════╝██╔══██╗██╔═══██╗██╔══██╗██║  ██║         ║
+    ║      ███╔╝ █████╗  ██████╔╝██║   ██║██║  ██║███████║         ║
+    ║     ███╔╝  ██╔══╝  ██╔══██╗██║   ██║██║  ██║██╔══██║         ║
+    ║    ███████╗███████╗██║  ██║╚██████╔╝██████╔╝██║  ██║         ║
+    ║    ╚══════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝         ║
+    ║                                                               ║
+    ║    ╔═══════════════════════════════════════════════════════╗ ║
+    ║    ║   🚀 Multi-Account Login Automation System            ║ ║
+    ║    ║   ✨ Professional Trading Platform Management         ║ ║
+    ║    ╚═══════════════════════════════════════════════════════╝ ║
+    ║                                                               ║
+    ╚═══════════════════════════════════════════════════════════════╝
         """
         version = "v1.1.0"
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         
-        self.console.print(Panel(banner, style="zerodha", expand=False))
-        self.console.print(f"[title]Zerodha Trading Platform Automation[/title] [subtitle]({version})[/subtitle]")
-        self.console.print(f"[subtitle]Started at: {current_time}[/subtitle]")
-        self.console.print("━" * 60, style="info")
+        # Enhanced spacing and presentation
+        self.console.print()
+        self.console.print(Panel(banner_text, style="zerodha", expand=False, border_style="bold #ff5722", padding=(1, 2)))
+        self.console.print()
+        self.console.print(Panel.fit(
+            f"[bold cyan]🚀 Zerodha Trading Platform Automation[/bold cyan]\n\n"
+            f"[dim]Version:[/dim] [bold white]{version}[/bold white]  [dim]|[/dim]  "
+            f"[dim]Started:[/dim] [bold white]{current_time}[/bold white]",
+            style="cyan",
+            border_style="bright_cyan",
+            padding=(0, 2)
+        ))
+        self.console.print()
+        self.console.print("[bold cyan]" + "═" * 72 + "[/bold cyan]")
+        self.console.print()
         
         # Log to file
         if self.log_to_file and self.log_file:
@@ -213,23 +227,53 @@ class TerminalUI:
     
     def print_summary(self, accounts_data: List[Dict[str, str]]):
         """Display a summary of accounts to be processed."""
-        table = Table(title="Accounts to Process", show_header=True, header_style="header", box=box.ROUNDED)
-        table.add_column("№", style="cyan", justify="center")
-        table.add_column("Username", style="value")
-        table.add_column("2FA Method", style="status.running")
-        table.add_column("Status", style="status.pending")
-        table.add_column("Active", style="status.success")
+        self.console.print()
+        self.console.print(Panel.fit(
+            "[bold bright_magenta]📊 Account Processing Summary[/bold bright_magenta]",
+            style="highlight",
+            border_style="bright_magenta",
+            padding=(0, 2)
+        ))
+        self.console.print()
+        
+        table = Table(
+            title="[bold bright_cyan]┌─ Accounts to Process ─┐[/bold bright_cyan]",
+            show_header=True,
+            header_style="bold bright_blue on dark_blue",
+            box=box.ROUNDED,
+            border_style="bright_cyan",
+            title_style="bold bright_cyan",
+            show_lines=True,
+            padding=(0, 1)
+        )
+        table.add_column("[bold]№[/bold]", style="bold cyan", justify="center", width=5, no_wrap=True)
+        table.add_column("[bold]Username[/bold]", style="bold white", width=15, no_wrap=True)
+        table.add_column("[bold]2FA Method[/bold]", style="bold yellow", justify="center", width=12)
+        table.add_column("[bold]Status[/bold]", style="dim white", justify="center", width=12)
+        table.add_column("[bold]Active[/bold]", style="bold green", justify="center", width=10)
         
         for i, account in enumerate(accounts_data, start=1):
             username = account.get(Config.CSV_USERNAME_HEADER, "N/A")
             pin_or_totp = account.get(Config.CSV_2FA_HEADER, "")
             status = account.get(Config.CSV_STATUS_HEADER, "1")
-            two_fa_type = "TOTP" if len(pin_or_totp) > 8 and pin_or_totp.isalnum() and not pin_or_totp.isdigit() else "PIN" if pin_or_totp else "None"
-            active_status = "✓" if status == "1" else "✗"
-            table.add_row(str(i), username, two_fa_type, "Pending", active_status)
+            two_fa_type = "[bold green]🔐 TOTP[/bold green]" if len(pin_or_totp) > 8 and pin_or_totp.isalnum() and not pin_or_totp.isdigit() else "[bold yellow]🔑 PIN[/bold yellow]" if pin_or_totp else "[dim]❌ None[/dim]"
+            active_status = "[bold green]✅ Active[/bold green]" if status == "1" else "[dim]⏸️  Inactive[/dim]"
+            table.add_row(
+                f"[cyan]{i}[/cyan]", 
+                f"[bold white]{username}[/bold white]", 
+                two_fa_type, 
+                "[yellow]⏳ Pending[/yellow]", 
+                active_status
+            )
         
         self.console.print(table)
-        self.console.print(f"[subtitle]Total accounts: {len(accounts_data)}[/subtitle]")
+        self.console.print()
+        self.console.print(Panel.fit(
+            f"[bold bright_green]✅ Total Accounts to Process: [bold white]{len(accounts_data)}[/bold white][/bold bright_green]",
+            border_style="bright_green",
+            padding=(0, 2)
+        ))
+        self.console.print()
     
     def log(self, message: str, level: str = "info", username: str = None):
         """Log a message with the appropriate styling and timestamp."""
@@ -248,18 +292,28 @@ class TerminalUI:
         
         # Format the log message with appropriate icons based on level
         icon = {
-            "info": "ℹ️",
+            "info": "🔵",
             "success": "✅",
             "warning": "⚠️",
             "error": "❌",
-            "highlight": "🔹"
+            "highlight": "✨"
         }.get(level, "•")
         
-        # Combine all parts
+        # Enhanced styling based on level
+        level_styles = {
+            "info": "[bold cyan]",
+            "success": "[bold green]",
+            "warning": "[bold yellow]",
+            "error": "[bold red]",
+            "highlight": "[bold bright_magenta]"
+        }
+        level_style = level_styles.get(level, "[bold white]")
+        
+        # Combine all parts with enhanced formatting
         if username:
-            log_msg = f"{time_prefix} {elapsed_prefix} [{level}]{icon}[/{level}] [{username}] {message}"
+            log_msg = f"{time_prefix} {elapsed_prefix} {level_style}{icon}[/] [bold]{username}[/bold] {message}"
         else:
-            log_msg = f"{time_prefix} {elapsed_prefix} [{level}]{icon}[/{level}] {message}"
+            log_msg = f"{time_prefix} {elapsed_prefix} {level_style}{icon}[/] {message}"
             
         self.console.print(log_msg)
         
@@ -834,7 +888,12 @@ class ZerodhaLoginBot:
         
         # Enable verbose mode for better debugging if needed
         if not self.args.verbose:
-            self.ui.log("TIP: Run with -v flag for detailed debug output", "highlight")
+            self.ui.console.print(Panel.fit(
+                "[bold yellow]💡 TIP:[/bold yellow] Run with [bold white]-v[/bold white] flag for detailed debug output",
+                border_style="yellow",
+                padding=(0, 1)
+            ))
+            self.ui.console.print()
         
         # Confirm before proceeding
         if not self.args.yes and not self._confirm_proceed(len(accounts_data)):
@@ -842,16 +901,33 @@ class ZerodhaLoginBot:
             sys.exit(0)
         
         # Execute login sessions
-        self.ui.log(f"Starting login sessions for {len(accounts_data)} account(s)...")
-        self.ui.log(f"Using connection timing parameters:")
-        self.ui.log(f"  - WEBDRIVER_WAIT_TIMEOUT: {Config.WEBDRIVER_WAIT_TIMEOUT}s")
-        self.ui.log(f"  - SHORT_DELAY: {Config.SHORT_DELAY}s")
-        self.ui.log(f"  - POST_LOGIN_CLICK_DELAY: {Config.POST_LOGIN_CLICK_DELAY}s")
-        self.ui.log(f"  - POST_2FA_KEY_DELAY: {Config.POST_2FA_KEY_DELAY}s")
+        self.ui.console.print()
+        self.ui.console.print(Panel.fit(
+            f"[bold bright_cyan]🚀 Starting Login Sessions[/bold bright_cyan]\n"
+            f"[dim]Processing {len(accounts_data)} account(s) in parallel mode[/dim]",
+            border_style="bright_cyan",
+            padding=(0, 2)
+        ))
+        self.ui.console.print()
+        self.ui.log(f"Starting login sessions for {len(accounts_data)} account(s)...", "highlight")
+        self.ui.log(f"Configuration Parameters:")
+        self.ui.console.print(f"  [dim]├─[/dim] [bold white]WEBDRIVER_WAIT_TIMEOUT:[/bold white] [cyan]{Config.WEBDRIVER_WAIT_TIMEOUT}s[/cyan]")
+        self.ui.console.print(f"  [dim]├─[/dim] [bold white]SHORT_DELAY:[/bold white] [cyan]{Config.SHORT_DELAY}s[/cyan]")
+        self.ui.console.print(f"  [dim]├─[/dim] [bold white]POST_LOGIN_CLICK_DELAY:[/bold white] [cyan]{Config.POST_LOGIN_CLICK_DELAY}s[/cyan]")
+        self.ui.console.print(f"  [dim]└─[/dim] [bold white]POST_2FA_KEY_DELAY:[/bold white] [cyan]{Config.POST_2FA_KEY_DELAY}s[/cyan]")
+        self.ui.console.print()
         
         # Always use parallel processing for faster login
         self._run_parallel(accounts_data)
         
+        self.ui.console.print()
+        self.ui.console.print(Panel.fit(
+            "[bold bright_green]✅ All Login Sessions Completed Successfully![/bold bright_green]\n\n"
+            "[dim]All browser windows remain open for your interaction[/dim]",
+            border_style="bright_green",
+            padding=(1, 2)
+        ))
+        self.ui.console.print()
         self.ui.log("All login sessions completed.", "highlight")
         self.ui.log("Browser windows remain open for your interaction.", "info")
     
@@ -967,6 +1043,8 @@ class ZerodhaLoginBot:
             threads.append(thread)
             
         # Start all threads at once for simultaneous processing
+        self.ui.console.print(f"[bold bright_cyan]🌐 Opening [bold white]{len(threads)}[/bold white] browser windows simultaneously...[/bold bright_cyan]")
+        self.ui.console.print()
         self.ui.log(f"Opening {len(threads)} browser windows simultaneously...", "highlight")
         for thread in threads:
             thread.start()

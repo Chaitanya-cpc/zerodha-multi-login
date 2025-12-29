@@ -102,20 +102,33 @@ class AlgoTestUI:
     
     def print_banner(self):
         """Display the application banner."""
-        banner = """
-    ╭─────────────────────────────────────────────────────╮
-    │                                                     │
-    │   [title]AlgoTest Login Automation[/title]          │
-    │   Zerodha → AlgoTest Login Flow                     │
-    │                                                     │
-    ╰─────────────────────────────────────────────────────╯
+        banner_text = """
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║                                                               ║
+    ║    ╔═══════════════════════════════════════════════════════╗ ║
+    ║    ║   🤖 AlgoTest Login Automation System                 ║ ║
+    ║    ║   🔄 Zerodha → AlgoTest Seamless Integration          ║ ║
+    ║    ╚═══════════════════════════════════════════════════════╝ ║
+    ║                                                               ║
+    ║    [highlight]Automated Multi-Platform Login Solution[/highlight]  ║
+    ║                                                               ║
+    ╚═══════════════════════════════════════════════════════════════╝
         """
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         
-        self.console.print(Panel(banner, style="highlight", expand=False))
-        self.console.print(f"[title]Zerodha Account: {Config.ZERODHA_ACCOUNT}[/title]")
-        self.console.print(f"[subtitle]Started at: {current_time}[/subtitle]")
-        self.console.print("━" * 60, style="info")
+        # Enhanced spacing and presentation
+        self.console.print()
+        self.console.print(Panel(banner_text, style="highlight", expand=False, border_style="bold #9c27b0", padding=(1, 2)))
+        self.console.print()
+        self.console.print(Panel.fit(
+            f"[bold bright_cyan]📊 Zerodha Account: [bold white]{Config.ZERODHA_ACCOUNT}[/bold white][/bold bright_cyan]\n\n"
+            f"[dim]Started at:[/dim] [bold white]{current_time}[/bold white]",
+            style="cyan",
+            border_style="bright_cyan",
+            padding=(0, 2)
+        ))
+        self.console.print()
+        self.console.print("[bold cyan]" + "═" * 72 + "[/bold cyan]")
         self.console.print()
     
     def log(self, message: str, level: str = "info"):
@@ -134,15 +147,25 @@ class AlgoTestUI:
         
         # Format the log message with appropriate icons
         icon = {
-            "info": "ℹ️",
+            "info": "🔵",
             "success": "✅",
             "warning": "⚠️",
             "error": "❌",
-            "highlight": "🔹"
+            "highlight": "✨"
         }.get(level, "•")
         
-        # Combine all parts
-        log_msg = f"{time_prefix} {elapsed_prefix} [{level}]{icon}[/{level}] {message}"
+        # Enhanced styling based on level
+        level_styles = {
+            "info": "[bold cyan]",
+            "success": "[bold green]",
+            "warning": "[bold yellow]",
+            "error": "[bold red]",
+            "highlight": "[bold bright_magenta]"
+        }
+        level_style = level_styles.get(level, "[bold white]")
+        
+        # Combine all parts with enhanced formatting
+        log_msg = f"{time_prefix} {elapsed_prefix} {level_style}{icon}[/] {message}"
         self.console.print(log_msg)
 
 # ==========================================================================
@@ -422,33 +445,57 @@ def main():
             sys.exit(1)
         
         # Step 1: Login to Zerodha
-        ui.log("=" * 60, "highlight")
-        ui.log("STEP 1: Logging into Zerodha", "highlight")
-        ui.log("=" * 60, "highlight")
+        ui.console.print()
+        ui.console.print(Panel.fit(
+            "[bold bright_cyan]📋 STEP 1: Logging into Zerodha[/bold bright_cyan]",
+            border_style="bright_cyan",
+            padding=(0, 2)
+        ))
+        ui.console.print()
         
         zerodha_success = browser_manager.login_zerodha(driver, zerodha_credentials)
         if not zerodha_success:
-            ui.log("Zerodha login failed. Exiting.", "error")
+            ui.console.print()
+            ui.console.print(Panel.fit(
+                "[bold bright_red]❌ Zerodha Login Failed[/bold bright_red]\n\n"
+                "[dim]Please check the logs above for error details[/dim]",
+                border_style="bright_red",
+                padding=(1, 2)
+            ))
+            ui.console.print()
             input("\nPress Enter to exit...")
             sys.exit(1)
         
         # Step 2: Open AlgoTest tab
-        ui.log("")
-        ui.log("=" * 60, "highlight")
-        ui.log("STEP 2: Opening AlgoTest tab", "highlight")
-        ui.log("=" * 60, "highlight")
+        ui.console.print()
+        ui.console.print(Panel.fit(
+            "[bold bright_cyan]📋 STEP 2: Opening AlgoTest Tab[/bold bright_cyan]",
+            border_style="bright_cyan",
+            padding=(0, 2)
+        ))
+        ui.console.print()
         
         algotest_tab_success = browser_manager.open_algotest_tab(driver)
         if not algotest_tab_success:
-            ui.log("Failed to open AlgoTest tab. Exiting.", "error")
+            ui.console.print()
+            ui.console.print(Panel.fit(
+                "[bold bright_red]❌ Failed to Open AlgoTest Tab[/bold bright_red]\n\n"
+                "[dim]Please check the logs above for error details[/dim]",
+                border_style="bright_red",
+                padding=(1, 2)
+            ))
+            ui.console.print()
             input("\nPress Enter to exit...")
             sys.exit(1)
         
         # Step 3: Login to AlgoTest
-        ui.log("")
-        ui.log("=" * 60, "highlight")
-        ui.log("STEP 3: Logging into AlgoTest", "highlight")
-        ui.log("=" * 60, "highlight")
+        ui.console.print()
+        ui.console.print(Panel.fit(
+            "[bold bright_cyan]📋 STEP 3: Logging into AlgoTest[/bold bright_cyan]",
+            border_style="bright_cyan",
+            padding=(0, 2)
+        ))
+        ui.console.print()
         
         # Get AlgoTest credentials
         algotest_credentials = credential_manager.get_algotest_credentials()
@@ -459,21 +506,48 @@ def main():
                 algotest_credentials["username"], 
                 algotest_credentials["password"]
             )
+            ui.console.print()
             if algotest_success:
+                ui.console.print(Panel.fit(
+                    "[bold bright_green]✅ AlgoTest Login Completed Successfully![/bold bright_green]",
+                    border_style="bright_green",
+                    padding=(1, 2)
+                ))
+                ui.console.print()
                 ui.log("AlgoTest login completed successfully", "success")
             else:
+                ui.console.print(Panel.fit(
+                    "[bold yellow]⚠️ AlgoTest Login Failed[/bold yellow]\n\n"
+                    "[dim]You may need to login manually[/dim]\n"
+                    "[dim]Check algotest_page_source.html for page structure[/dim]",
+                    border_style="yellow",
+                    padding=(1, 2)
+                ))
+                ui.console.print()
                 ui.log("AlgoTest login failed - you may need to login manually", "warning")
                 ui.log("Check algotest_page_source.html for page structure", "info")
         else:
+            ui.console.print()
+            ui.console.print(Panel.fit(
+                "[bold yellow]⚠️ AlgoTest Credentials Not Configured[/bold yellow]\n\n"
+                f"[dim]Add credentials to: [bold white]{Config.ALGOTEST_CREDENTIALS_FILE}[/bold white][/dim]\n"
+                "[dim]Browser window will remain open for manual login[/dim]",
+                border_style="yellow",
+                padding=(1, 2)
+            ))
+            ui.console.print()
             ui.log("AlgoTest credentials not configured - please login manually", "warning")
             ui.log(f"Add credentials to: {Config.ALGOTEST_CREDENTIALS_FILE}", "info")
             ui.log("Browser window will remain open for manual login", "info")
         
-        ui.log("")
-        ui.log("=" * 60, "highlight")
-        ui.log("Process completed", "success")
-        ui.log("Browser windows remain open for your use", "info")
-        ui.log("=" * 60, "highlight")
+        ui.console.print()
+        ui.console.print(Panel.fit(
+            "[bold bright_green]✅ Process Completed Successfully![/bold bright_green]\n\n"
+            "[dim]Browser windows remain open for your use[/dim]",
+            border_style="bright_green",
+            padding=(1, 2)
+        ))
+        ui.console.print()
         
         input("\nPress Enter to exit...")
         

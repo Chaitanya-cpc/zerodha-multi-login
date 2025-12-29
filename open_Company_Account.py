@@ -97,31 +97,40 @@ class CompanyAccountUI:
     
     def print_banner(self):
         """Display the application banner."""
-        banner = """
-    ╭─────────────────────────────────────────────────────╮
-    │                                                     │
-    │   ███████╗███████╗██████╗  ██████╗ ██████╗ ██╗  ██╗ │
-    │   ╚══███╔╝██╔════╝██╔══██╗██╔═══██╗██╔══██╗██║  ██║ │
-    │     ███╔╝ █████╗  ██████╔╝██║   ██║██║  ██║███████║ │
-    │    ███╔╝  ██╔══╝  ██╔══██╗██║   ██║██║  ██║██╔══██║ │
-    │   ███████╗███████╗██║  ██║╚██████╔╝██████╔╝██║  ██║ │
-    │   ╚══════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝ │
-    │                                                     │
-    │   [title]Company Account Login[/title]              │
-    │                                                     │
-    ╰─────────────────────────────────────────────────────╯
+        banner_text = """
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║                                                               ║
+    ║    ███████╗███████╗██████╗  ██████╗ ██████╗ ██╗  ██╗         ║
+    ║    ╚══███╔╝██╔════╝██╔══██╗██╔═══██╗██╔══██╗██║  ██║         ║
+    ║      ███╔╝ █████╗  ██████╔╝██║   ██║██║  ██║███████║         ║
+    ║     ███╔╝  ██╔══╝  ██╔══██╗██║   ██║██║  ██║██╔══██║         ║
+    ║    ███████╗███████╗██║  ██║╚██████╔╝██████╔╝██║  ██║         ║
+    ║    ╚══════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝         ║
+    ║                                                               ║
+    ║    ╔═══════════════════════════════════════════════════════╗ ║
+    ║    ║   🏢 Company Account Login Portal                     ║ ║
+    ║    ║   ⭐ Exclusive HDN374 Account Access                  ║ ║
+    ║    ╚═══════════════════════════════════════════════════════╝ ║
+    ║                                                               ║
+    ╚═══════════════════════════════════════════════════════════════╝
         """
         version = "v1.0.0"
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         
-        # Add some spacing for better visual presentation
+        # Enhanced spacing and presentation
         self.console.print()
-        self.console.print(Panel(banner, style="zerodha", expand=False))
+        self.console.print(Panel(banner_text, style="zerodha", expand=False, border_style="bold #ff5722", padding=(1, 2)))
         self.console.print()
-        self.console.print(f"[title]Company Account: {Config.TARGET_ACCOUNT}[/title] [subtitle]({version})[/subtitle]")
-        self.console.print(f"[subtitle]Started at: {current_time}[/subtitle]")
+        self.console.print(Panel.fit(
+            f"[bold bright_magenta]🏢 Company Account: [bold white]{Config.TARGET_ACCOUNT}[/bold white][/bold bright_magenta]\n\n"
+            f"[dim]Version:[/dim] [bold white]{version}[/bold white]  [dim]|[/dim]  "
+            f"[dim]Started:[/dim] [bold white]{current_time}[/bold white]",
+            style="bright_magenta",
+            border_style="bright_magenta",
+            padding=(0, 2)
+        ))
         self.console.print()
-        self.console.print("━" * 60, style="info")
+        self.console.print("[bold cyan]" + "═" * 72 + "[/bold cyan]")
         self.console.print()
     
     def log(self, message: str, level: str = "info"):
@@ -140,15 +149,25 @@ class CompanyAccountUI:
         
         # Format the log message with appropriate icons
         icon = {
-            "info": "ℹ️",
+            "info": "🔵",
             "success": "✅",
             "warning": "⚠️",
             "error": "❌",
-            "highlight": "🔹"
+            "highlight": "✨"
         }.get(level, "•")
         
-        # Combine all parts
-        log_msg = f"{time_prefix} {elapsed_prefix} [{level}]{icon}[/{level}] {message}"
+        # Enhanced styling based on level
+        level_styles = {
+            "info": "[bold cyan]",
+            "success": "[bold green]",
+            "warning": "[bold yellow]",
+            "error": "[bold red]",
+            "highlight": "[bold bright_magenta]"
+        }
+        level_style = level_styles.get(level, "[bold white]")
+        
+        # Combine all parts with enhanced formatting
+        log_msg = f"{time_prefix} {elapsed_prefix} {level_style}{icon}[/] {message}"
         self.console.print(log_msg)
 
 # ==========================================================================
@@ -519,12 +538,28 @@ def main():
             sys.exit(1)
         
         # Display account info
-        ui.log(f"Account: {Config.TARGET_ACCOUNT}")
-        ui.log(f"User ID: {credentials['user_id']}")
-        ui.log(f"2FA Method: {'TOTP' if len(credentials.get('pin', '')) > 8 else 'PIN' if credentials.get('pin') else 'None'}")
+        two_fa_method = 'TOTP' if len(credentials.get('pin', '')) > 8 else 'PIN' if credentials.get('pin') else 'None'
+        two_fa_icon = "🔐" if two_fa_method == "TOTP" else "🔑" if two_fa_method == "PIN" else "❌"
+        
+        ui.console.print()
+        ui.console.print(Panel.fit(
+            f"[bold bright_cyan]📋 Account Information[/bold bright_cyan]\n\n"
+            f"[dim]Account ID:[/dim] [bold white]{Config.TARGET_ACCOUNT}[/bold white]\n"
+            f"[dim]User ID:[/dim] [bold white]{credentials['user_id']}[/bold white]\n"
+            f"[dim]2FA Method:[/dim] [bold yellow]{two_fa_icon} {two_fa_method}[/bold yellow]",
+            border_style="bright_cyan",
+            padding=(1, 2)
+        ))
+        ui.console.print()
         
         # Confirm before proceeding
-        ui.log("Ready to login. Press Enter to continue or Ctrl+C to cancel...")
+        ui.console.print(Panel.fit(
+            "[bold yellow]⏸️  Ready to Login[/bold yellow]\n\n"
+            "[dim]Press [bold white]Enter[/bold white] to continue or [bold white]Ctrl+C[/bold white] to cancel[/dim]",
+            border_style="yellow",
+            padding=(1, 2)
+        ))
+        ui.console.print()
         try:
             input()
         except KeyboardInterrupt:
@@ -537,10 +572,25 @@ def main():
         login_session = CompanyAccountLogin(credentials, ui, browser_manager)
         result = login_session.execute()
         
+        ui.console.print()
         if result:
+            ui.console.print(Panel.fit(
+                f"[bold bright_green]✅ Successfully Logged Into {Config.TARGET_ACCOUNT}![/bold bright_green]\n\n"
+                "[dim]Browser window will remain open for your use[/dim]",
+                border_style="bright_green",
+                padding=(1, 2)
+            ))
+            ui.console.print()
             ui.log(f"✅ Successfully logged into {Config.TARGET_ACCOUNT}", "success")
             ui.log("Browser window will remain open for your use.", "info")
         else:
+            ui.console.print(Panel.fit(
+                f"[bold bright_red]❌ Failed to Login to {Config.TARGET_ACCOUNT}[/bold bright_red]\n\n"
+                "[dim]Please check the logs above for error details[/dim]",
+                border_style="bright_red",
+                padding=(1, 2)
+            ))
+            ui.console.print()
             ui.log(f"❌ Failed to login to {Config.TARGET_ACCOUNT}", "error")
             if is_double_clicked:
                 input("\nPress Enter to exit...")
@@ -548,7 +598,13 @@ def main():
         
         # Keep terminal open when double-clicked
         if is_double_clicked:
-            ui.log("Login process completed. Browser window remains open.", "highlight")
+            ui.console.print(Panel.fit(
+                "[bold bright_magenta]✨ Login Process Completed[/bold bright_magenta]\n\n"
+                "[dim]Browser window remains open for your use[/dim]",
+                border_style="bright_magenta",
+                padding=(1, 2)
+            ))
+            ui.console.print()
             input("\nPress Enter to exit...")
         
     except KeyboardInterrupt:
