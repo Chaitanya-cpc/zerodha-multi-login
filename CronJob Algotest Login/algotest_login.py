@@ -94,6 +94,7 @@ class Config:
     # Account-specific login button locators (after unlisted broker)
     ALGOTEST_LOGIN_BUTTON_BU0542_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[3]/div[2]/div[1]/div/div/div[3]/button")  # Login button for BU0542
     ALGOTEST_LOGIN_BUTTON_HDN374_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[3]/div[2]/div[2]/div/div/div[3]/button")  # Login button for HDN374
+    ALGOTEST_LOGIN_BUTTON_HDN374_FALLBACK_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[1]/div[2]/div[2]/div/div/div[3]/button")  # Fallback login button for HDN374
 
 # ==========================================================================
 # --- Terminal UI ---
@@ -491,15 +492,35 @@ class AlgoTestBrowserManager:
             # Step 4: Click account-specific login button
             if account_id == "BU0542":
                 login_button_locator = Config.ALGOTEST_LOGIN_BUTTON_BU0542_LOCATOR
+                fallback_locator = None
             elif account_id == "HDN374":
                 login_button_locator = Config.ALGOTEST_LOGIN_BUTTON_HDN374_LOCATOR
+                fallback_locator = Config.ALGOTEST_LOGIN_BUTTON_HDN374_FALLBACK_LOCATOR
             else:
                 self.ui.log(f"Unknown account ID: {account_id}. Skipping account-specific login button.", "warning")
                 return True
             
             self.ui.log(f"Looking for login button for {account_id}...")
-            account_login_button = wait.until(EC.element_to_be_clickable(login_button_locator))
-            self.ui.log(f"Found login button for {account_id}", "success")
+            account_login_button = None
+            
+            # Try primary locator first
+            try:
+                account_login_button = wait.until(EC.element_to_be_clickable(login_button_locator))
+                self.ui.log(f"Found login button for {account_id} using primary XPath", "success")
+            except TimeoutException:
+                # If primary fails and we have a fallback, try it
+                if fallback_locator:
+                    self.ui.log(f"Primary XPath failed for {account_id}. Trying fallback XPath...", "warning")
+                    try:
+                        account_login_button = wait.until(EC.element_to_be_clickable(fallback_locator))
+                        self.ui.log(f"Found login button for {account_id} using fallback XPath", "success")
+                    except TimeoutException:
+                        self.ui.log(f"Failed to find login button for {account_id} using both primary and fallback XPaths", "error")
+                        raise
+                else:
+                    self.ui.log(f"Failed to find login button for {account_id}", "error")
+                    raise
+            
             account_login_button.click()
             self.ui.log(f"Clicked login button for {account_id}", "success")
             
