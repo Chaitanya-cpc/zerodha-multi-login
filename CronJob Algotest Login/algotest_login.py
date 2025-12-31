@@ -49,7 +49,7 @@ class Config:
     # Accounts will be processed sequentially if multiple are enabled
     ACCOUNTS_CONFIG = {
         "BU0542": 1,  # Set to 1 to enable, 0 to disable
-        "HDN374": 1,  # Set to 1 to enable, 0 to disable
+        "HDN374": 0,  # Set to 1 to enable, 0 to disable
     }
     
     # Target Accounts (legacy - kept for backward compatibility)
@@ -88,6 +88,7 @@ class Config:
     
     # AlgoTest Post-Login Locators
     ALGOTEST_BROKER_SETUP_BUTTON_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/nav/div[2]/div[1]/a[2]")  # Broker setup button
+    ALGOTEST_BROKER_SETUP_BUTTON_FALLBACK_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div[2]/div/div[2]/div[3]/div/a/button")  # Fallback broker setup button
     ALGOTEST_UNLISTED_BROKER_LOCATOR = (By.XPATH, "//p[contains(text(), 'Unlisted Broker')]")  # Unlisted broker text (by text content)
     ALGOTEST_UNLISTED_BROKER_FALLBACK_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[1]/div[1]/div[1]/p")  # Fallback locator for unlisted broker
     
@@ -452,8 +453,22 @@ class AlgoTestBrowserManager:
             
             # Step 2: Click broker setup button
             self.ui.log("Looking for broker setup button...")
-            broker_setup_button = wait.until(EC.element_to_be_clickable(Config.ALGOTEST_BROKER_SETUP_BUTTON_LOCATOR))
-            self.ui.log("Found broker setup button", "success")
+            broker_setup_button = None
+            
+            # Try primary locator first
+            try:
+                broker_setup_button = wait.until(EC.element_to_be_clickable(Config.ALGOTEST_BROKER_SETUP_BUTTON_LOCATOR))
+                self.ui.log("Found broker setup button using primary XPath", "success")
+            except TimeoutException:
+                # If primary fails, try fallback
+                self.ui.log("Primary XPath failed for broker setup button. Trying fallback XPath...", "warning")
+                try:
+                    broker_setup_button = wait.until(EC.element_to_be_clickable(Config.ALGOTEST_BROKER_SETUP_BUTTON_FALLBACK_LOCATOR))
+                    self.ui.log("Found broker setup button using fallback XPath", "success")
+                except TimeoutException:
+                    self.ui.log("Failed to find broker setup button using both primary and fallback XPaths", "error")
+                    raise
+            
             broker_setup_button.click()
             self.ui.log("Clicked broker setup button", "success")
             time.sleep(Config.SHORT_DELAY)
