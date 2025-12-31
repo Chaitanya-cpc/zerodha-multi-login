@@ -93,6 +93,7 @@ class Config:
     
     # Account-specific login button locators (after unlisted broker)
     ALGOTEST_LOGIN_BUTTON_BU0542_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[3]/div[2]/div[1]/div/div/div[3]/button")  # Login button for BU0542
+    ALGOTEST_LOGIN_BUTTON_BU0542_FALLBACK_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[1]/div[2]/div[1]/div/div/div[3]/button")  # Fallback login button for BU0542
     ALGOTEST_LOGIN_BUTTON_HDN374_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[3]/div[2]/div[2]/div/div/div[3]/button")  # Login button for HDN374
     ALGOTEST_LOGIN_BUTTON_HDN374_FALLBACK_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[1]/div[2]/div[2]/div/div/div[3]/button")  # Fallback login button for HDN374
 
@@ -492,7 +493,7 @@ class AlgoTestBrowserManager:
             # Step 4: Click account-specific login button
             if account_id == "BU0542":
                 login_button_locator = Config.ALGOTEST_LOGIN_BUTTON_BU0542_LOCATOR
-                fallback_locator = None
+                fallback_locator = Config.ALGOTEST_LOGIN_BUTTON_BU0542_FALLBACK_LOCATOR
             elif account_id == "HDN374":
                 login_button_locator = Config.ALGOTEST_LOGIN_BUTTON_HDN374_LOCATOR
                 fallback_locator = Config.ALGOTEST_LOGIN_BUTTON_HDN374_FALLBACK_LOCATOR
