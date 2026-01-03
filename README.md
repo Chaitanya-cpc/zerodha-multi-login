@@ -186,8 +186,18 @@ Browser Windows Remain Open
 ### Prerequisites
 
 - Python 3.8 or higher
-- Google Chrome browser (latest version recommended)
+- Google Chrome browser (latest version recommended) or Chromium (Linux)
 - ChromeDriver (usually auto-detected, see [DRIVERS/README_DRIVERS.md](DRIVERS/README_DRIVERS.md))
+
+### Platform Support
+
+This project supports **Windows**, **macOS**, and **Linux** operating systems. All scripts are cross-platform and will automatically detect and use the appropriate paths and configurations for your operating system.
+
+**Linux-specific notes:**
+- Supports both Google Chrome and Chromium browsers
+- Automatically detects Chrome profile location (`~/.config/google-chrome` or `~/.config/chromium`)
+- Chrome options optimized for Linux (including `--no-sandbox` and `--disable-dev-shm-usage`)
+- All file paths use cross-platform methods (`os.path.join`)
 
 ### Step 1: Clone Repository
 

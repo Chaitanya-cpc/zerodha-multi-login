@@ -10,6 +10,7 @@ import csv
 import time
 import sys
 import os
+import platform
 import traceback
 from typing import Dict, Optional
 
@@ -243,15 +244,24 @@ class CompanyBrowserManager:
     
     def _setup_chrome_profile(self):
         """Setup Chrome to use existing profile with all extensions."""
-        import platform
-        
         # Get Chrome user data directory based on OS
-        if platform.system() == "Windows":
-            user_data_dir = os.path.expanduser("~\\AppData\\Local\\Google\\Chrome\\User Data")
-        elif platform.system() == "Darwin":  # macOS
-            user_data_dir = os.path.expanduser("~/Library/Application Support/Google/Chrome")
-        else:  # Linux
-            user_data_dir = os.path.expanduser("~/.config/google-chrome")
+        system = platform.system()
+        home = os.path.expanduser("~")
+        
+        if system == "Windows":
+            # Windows: AppData\Local\Google\Chrome\User Data
+            user_data_dir = os.path.join(home, "AppData", "Local", "Google", "Chrome", "User Data")
+        elif system == "Darwin":  # macOS
+            # macOS: ~/Library/Application Support/Google/Chrome
+            user_data_dir = os.path.join(home, "Library", "Application Support", "Google", "Chrome")
+        else:  # Linux (and other Unix-like systems)
+            # Linux: Try google-chrome first, then chromium
+            user_data_dir = os.path.join(home, ".config", "google-chrome")
+            # Check if google-chrome exists, if not try chromium
+            if not os.path.exists(user_data_dir):
+                chromium_dir = os.path.join(home, ".config", "chromium")
+                if os.path.exists(chromium_dir):
+                    user_data_dir = chromium_dir
         
         return user_data_dir
     

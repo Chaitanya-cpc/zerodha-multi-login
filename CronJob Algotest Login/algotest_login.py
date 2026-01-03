@@ -49,7 +49,7 @@ class Config:
     # Accounts will be processed sequentially if multiple are enabled
     ACCOUNTS_CONFIG = {
         "BU0542": 1,  # Set to 1 to enable, 0 to disable
-        "HDN374": 0,  # Set to 1 to enable, 0 to disable
+        "HDN374": 1,  # Set to 1 to enable, 0 to disable
     }
     
     # Target Accounts (legacy - kept for backward compatibility)
