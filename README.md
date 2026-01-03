@@ -199,6 +199,8 @@ This project supports **Windows**, **macOS**, and **Linux** operating systems. A
 - Chrome options optimized for Linux (including `--no-sandbox` and `--disable-dev-shm-usage`)
 - All file paths use cross-platform methods (`os.path.join`)
 
+📖 **For detailed Linux setup instructions, see [LINUX_SETUP.md](LINUX_SETUP.md)**
+
 ### Step 1: Clone Repository
 
 ```bash
