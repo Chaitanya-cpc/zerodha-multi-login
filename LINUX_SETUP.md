@@ -341,12 +341,14 @@ python3 "CronJob Algotest Login/algotest_login.py"
 ## 🔒 Security Best Practices for Linux
 
 1. **File Permissions:**
+
    ```bash
    chmod 600 config/zerodha_credentials.csv
    chmod 600 "CronJob Algotest Login/algotest_credentials.json"
    ```
 
 2. **Use Virtual Environment:**
+
    ```bash
    python3 -m venv venv
    source venv/bin/activate
@@ -354,11 +356,13 @@ python3 "CronJob Algotest Login/algotest_login.py"
    ```
 
 3. **Keep Scripts Private:**
+
    - Don't share credentials files
    - Keep repository private if possible
    - Use secure file transfer methods (SFTP, SCP)
 
 4. **Regular Updates:**
+
    ```bash
    # Update Chrome/Chromium
    sudo apt update && sudo apt upgrade google-chrome-stable
@@ -392,4 +396,3 @@ If you encounter issues:
    python3 src/auto_login.py -v
    ```
 4. Check log files in `logs/` directory for error details
-
