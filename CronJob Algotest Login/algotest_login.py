@@ -786,7 +786,12 @@ def main():
         ))
         ui.console.print()
         
-        input("\nPress Enter to exit...")
+        # Only wait for user input if running interactively (not via launchd/cron)
+        if sys.stdin.isatty():
+            try:
+                input("\nPress Enter to exit...")
+            except (EOFError, KeyboardInterrupt):
+                pass  # Ignore EOF errors when running non-interactively
         
     except KeyboardInterrupt:
         ui.log("\nOperation cancelled by user", "warning")
@@ -794,7 +799,12 @@ def main():
     except Exception as e:
         ui.log(f"An error occurred: {str(e)}", "error")
         traceback.print_exc()
-        input("\nPress Enter to exit...")
+        # Only wait for user input if running interactively
+        if sys.stdin.isatty():
+            try:
+                input("\nPress Enter to exit...")
+            except (EOFError, KeyboardInterrupt):
+                pass  # Ignore EOF errors when running non-interactively
         sys.exit(1)
 
 if __name__ == '__main__':
