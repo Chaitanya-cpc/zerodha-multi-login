@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Unique identifier for the launch agent -->
+    <key>Label</key>
+    <string>com.algotest.login</string>
+    
+    <!-- Program to execute -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Library/Frameworks/Python.framework/Versions/3.11/bin/python3</string>
+        <string>/Applications/Codebase/zerodha_automation/CronJob Algotest Login/algotest_login.py</string>
+    </array>
+    
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Applications/Codebase/zerodha_automation</string>
+    
+    <!-- Run at 8:45 AM daily -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>8</integer>
+        <key>Minute</key>
+        <integer>45</integer>
+    </dict>
+    
+    <!-- Standard output and error logging -->
+    <key>StandardOutPath</key>
+    <string>/Applications/Codebase/zerodha_automation/logs/cron/algotest_launchd.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Applications/Codebase/zerodha_automation/logs/cron/algotest_launchd.error.log</string>
+    
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Frameworks/Python.framework/Versions/3.11/bin</string>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+    
+    <!-- Keep job alive (restart if it crashes) -->
+    <key>KeepAlive</key>
+    <false/>
+    
+    <!-- Run at load time (for testing) -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
