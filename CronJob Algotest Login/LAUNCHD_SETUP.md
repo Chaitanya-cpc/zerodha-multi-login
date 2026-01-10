@@ -152,3 +152,4 @@ chmod 600 config/zerodha_credentials.csv
 chmod 600 "CronJob Algotest Login/algotest_credentials.json"
 ```
 
+
