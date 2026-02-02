@@ -1,0 +1,59 @@
+╔═══════════════════════════════════════════════════════════════╗
+║      Zerodha Automation - Installation Instructions          ║
+╚═══════════════════════════════════════════════════════════════╝
+
+QUICK INSTALL (Run with sudo):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+sudo bash install_setup.sh
+
+This will automatically:
+  ✓ Install pip3 (if needed)
+  ✓ Install all Python dependencies
+  ✓ Set up credentials file
+  ✓ Verify installation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MANUAL INSTALLATION (Step by step):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1: Install pip3
+  sudo apt update
+  sudo apt install python3-pip -y
+
+Step 2: Install Python Dependencies
+  pip3 install -r requirements.txt
+
+Step 3: Install ChromeDriver
+  bash download_chromedriver.sh
+  # Follow the instructions shown, or see DRIVERS/README_DRIVERS.md
+
+Step 4: Configure Credentials
+  cp config/zerodha_credentials.csv.example config/zerodha_credentials.csv
+  nano config/zerodha_credentials.csv  # Edit with your credentials
+  chmod 600 config/zerodha_credentials.csv
+
+Step 5: Verify Setup
+  bash verify_setup.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+AFTER INSTALLATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Edit credentials: nano config/zerodha_credentials.csv
+2. Test script: python3 src/auto_login.py --help
+3. First run: python3 src/auto_login.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DOCUMENTATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  • QUICK_START.md - 5-minute quick start
+  • SETUP.md - Comprehensive setup guide
+  • README.md - Main documentation
+  • DRIVERS/README_DRIVERS.md - ChromeDriver guide
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

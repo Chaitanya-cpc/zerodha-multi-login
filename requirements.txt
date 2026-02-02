@@ -1,0 +1,5 @@
+selenium
+pyotp
+rich
+tqdm
+webdriver-manager
