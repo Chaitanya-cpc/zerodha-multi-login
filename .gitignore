@@ -13,16 +13,19 @@ pip-freeze.txt
 dist/
 build/
 
-# Configuration files (DO NOT COMMIT REAL CREDENTIALS)
+# Configuration files (DO NOT COMMIT REAL CREDENTIALS OR ACCOUNT IDs)
 config/zerodha_credentials.csv
+config/accounts_config.json
 CronJob Algotest Login/algotest_credentials.json
 
-# Any credential files
+# Any credential/config files with sensitive data
 *credentials*.csv
 *credentials*.json
+**/accounts_config.json
 !*credentials*.example
 !*credentials*.csv.example
 !*credentials*.json.example
+!**/accounts_config.json.example
 
 # Screenshots (may contain sensitive info)
 *.png

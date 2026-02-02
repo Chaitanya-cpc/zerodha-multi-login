@@ -2,11 +2,13 @@
 """
 Zerodha Company Account Login Script
 
-A specialized script for logging into the HDN374 company account only.
+A specialized script for logging into the configured company account.
+Account ID is loaded from config/accounts_config.json for security.
 """
 
 # Standard Library Imports
 import csv
+import json
 import time
 import sys
 import os
@@ -44,6 +46,23 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 # --- Configuration ---
 # ==========================================================================
 
+def load_accounts_config():
+    """Load account configuration from JSON file."""
+    config_paths = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config', 'accounts_config.json'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config', 'accounts_config.json'),
+    ]
+    
+    for config_path in config_paths:
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                return json.load(f)
+    
+    raise FileNotFoundError(
+        "accounts_config.json not found. Please copy config/accounts_config.json.example "
+        "to config/accounts_config.json and configure your account IDs."
+    )
+
 class Config:
     """Configuration settings for the company account login."""
     
@@ -52,8 +71,9 @@ class Config:
     CONFIG_DIR = os.path.join(BASE_DIR, 'config')
     CREDENTIALS_FILE = os.path.join(CONFIG_DIR, 'zerodha_credentials.csv')
     
-    # Target Account
-    TARGET_ACCOUNT = "HDN374"
+    # Load account config and set TARGET_ACCOUNT
+    _accounts_config = load_accounts_config()
+    TARGET_ACCOUNT = _accounts_config.get('company_account', {}).get('account_id', 'YOUR_ACCOUNT_ID')
     
     # URLs
     ZERODHA_LOGIN_URL = "https://kite.zerodha.com/"
@@ -118,7 +138,7 @@ class CompanyAccountUI:
     ║                                                               ║
     ║    ╔═══════════════════════════════════════════════════════╗ ║
     ║    ║   🏢 Company Account Login Portal                     ║ ║
-    ║    ║   ⭐ Exclusive HDN374 Account Access                  ║ ║
+    ║    ║   ⭐ Exclusive Company Account Access                 ║ ║
     ║    ╚═══════════════════════════════════════════════════════╝ ║
     ║                                                               ║
     ╚═══════════════════════════════════════════════════════════════╝
@@ -197,7 +217,7 @@ class CompanyCredentialManager:
         os.makedirs(os.path.dirname(self.credentials_file), exist_ok=True)
     
     def get_company_credentials(self) -> Optional[Dict[str, str]]:
-        """Get credentials for the company account (HDN374)."""
+        """Get credentials for the configured company account."""
         self.ui.log(f"Reading credentials for {Config.TARGET_ACCOUNT}")
         
         try:

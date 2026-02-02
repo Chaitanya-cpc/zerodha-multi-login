@@ -2,11 +2,13 @@
 """
 Zerodha My Accounts Login Script
 
-A specialized script for logging into HDN374 and BU0542 accounts.
+A specialized script for logging into configured personal accounts.
+Account IDs are loaded from config/accounts_config.json for security.
 """
 
 # Standard Library Imports
 import csv
+import json
 import time
 import sys
 import os
@@ -48,6 +50,22 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 # --- Configuration ---
 # ==========================================================================
 
+def load_accounts_config():
+    """Load account configuration from JSON file."""
+    config_paths = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config', 'accounts_config.json'),
+    ]
+    
+    for config_path in config_paths:
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                return json.load(f)
+    
+    raise FileNotFoundError(
+        "accounts_config.json not found. Please copy config/accounts_config.json.example "
+        "to config/accounts_config.json and configure your account IDs."
+    )
+
 class Config:
     """Configuration settings for the my accounts login."""
     
@@ -58,8 +76,9 @@ class Config:
     EXTENSIONS_DIR = os.path.join(BASE_DIR, 'extensions')
     TRADING_ALGO_EXTENSION = os.path.join(EXTENSIONS_DIR, 'Trading Algo')
     
-    # Target Accounts (HDN374 and BU0542)
-    TARGET_ACCOUNTS = ["HDN374", "BU0542"]
+    # Load account config and set TARGET_ACCOUNTS
+    _accounts_config = load_accounts_config()
+    TARGET_ACCOUNTS = _accounts_config.get('my_accounts', {}).get('account_ids', [])
     
     # URLs
     ZERODHA_LOGIN_URL = "https://kite.zerodha.com/"
@@ -124,7 +143,7 @@ class MyAccountsUI:
     ║                                                               ║
     ║    ╔═══════════════════════════════════════════════════════╗ ║
     ║    ║   🔐 My Accounts Login Portal                         ║ ║
-    ║    ║   ⭐ HDN374 & BU0542 Account Access                   ║ ║
+    ║    ║   ⭐ Personal Accounts Access                         ║ ║
     ║    ╚═══════════════════════════════════════════════════════╝ ║
     ║                                                               ║
     ╚═══════════════════════════════════════════════════════════════╝
@@ -136,8 +155,9 @@ class MyAccountsUI:
         self.console.print()
         self.console.print(Panel(banner_text, style="zerodha", expand=False, border_style="bold #ff5722", padding=(1, 2)))
         self.console.print()
+        accounts_str = " & ".join(Config.TARGET_ACCOUNTS) if Config.TARGET_ACCOUNTS else "Not Configured"
         self.console.print(Panel.fit(
-            f"[bold bright_magenta]🔐 My Accounts: HDN374 & BU0542[/bold bright_magenta]\n\n"
+            f"[bold bright_magenta]🔐 My Accounts: {accounts_str}[/bold bright_magenta]\n\n"
             f"[dim]Version:[/dim] [bold white]{version}[/bold white]  [dim]|[/dim]  "
             f"[dim]Started:[/dim] [bold white]{current_time}[/bold white]",
             style="cyan",
@@ -530,7 +550,8 @@ def main():
         
         # Special welcome message for double-clicked execution
         if is_double_clicked:
-            ui.log("🎯 Welcome! This script will login to HDN374 and BU0542 accounts.", "highlight")
+            accounts_str = " and ".join(Config.TARGET_ACCOUNTS) if Config.TARGET_ACCOUNTS else "configured"
+            ui.log(f"🎯 Welcome! This script will login to {accounts_str} accounts.", "highlight")
             ui.log("📋 Please ensure you have the correct credentials in the CSV file.", "info")
             ui.log("")
         

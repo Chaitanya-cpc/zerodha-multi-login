@@ -2,7 +2,8 @@
 """
 AlgoTest Login Automation Script
 
-Logs into Zerodha BU0542 account, then opens algotest.in/live in a new tab and logs in.
+Logs into configured Zerodha accounts, then opens algotest.in/live in a new tab and logs in.
+Account IDs are loaded from config/accounts_config.json for security.
 """
 
 # Standard Library Imports
@@ -45,6 +46,22 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 # --- Configuration ---
 # ==========================================================================
 
+def load_accounts_config():
+    """Load account configuration from JSON file."""
+    config_paths = [
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config', 'accounts_config.json'),
+    ]
+    
+    for config_path in config_paths:
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                return json.load(f)
+    
+    raise FileNotFoundError(
+        "accounts_config.json not found. Please copy config/accounts_config.json.example "
+        "to config/accounts_config.json and configure your account IDs."
+    )
+
 class Config:
     """Configuration settings."""
     
@@ -54,15 +71,18 @@ class Config:
     CREDENTIALS_FILE = os.path.join(CONFIG_DIR, 'zerodha_credentials.csv')
     ALGOTEST_CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), 'algotest_credentials.json')
     
-    # Account Configuration - Set to 1 to enable, 0 to disable
-    # Accounts will be processed sequentially if multiple are enabled
-    ACCOUNTS_CONFIG = {
-        "BU0542": 1,  # Set to 1 to enable, 0 to disable
-        "HDN374": 1,  # Set to 1 to enable, 0 to disable
-    }
+    # Load account config
+    _accounts_config = load_accounts_config()
     
-    # Target Accounts (legacy - kept for backward compatibility)
-    ZERODHA_ACCOUNT = "BU0542"
+    # Account Configuration - loaded from config file
+    # Set to 1 to enable, 0 to disable in accounts_config.json
+    ACCOUNTS_CONFIG = _accounts_config.get('algotest', {}).get('zerodha_accounts', {})
+    
+    # Target Accounts list (for iteration)
+    TARGET_ACCOUNTS = list(ACCOUNTS_CONFIG.keys())
+    
+    # Default account (first enabled one)
+    ZERODHA_ACCOUNT = next((acc for acc, enabled in ACCOUNTS_CONFIG.items() if enabled), None)
     
     # URLs
     ZERODHA_LOGIN_URL = "https://kite.zerodha.com/"
@@ -102,10 +122,20 @@ class Config:
     ALGOTEST_UNLISTED_BROKER_FALLBACK_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[1]/div[1]/div[1]/p")  # Fallback locator for unlisted broker
     
     # Account-specific login button locators (after unlisted broker)
-    ALGOTEST_LOGIN_BUTTON_BU0542_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[3]/div[2]/div[1]/div/div/div[3]/button")  # Login button for BU0542
-    ALGOTEST_LOGIN_BUTTON_BU0542_FALLBACK_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[1]/div[2]/div[1]/div/div/div[3]/button")  # Fallback login button for BU0542
-    ALGOTEST_LOGIN_BUTTON_HDN374_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[3]/div[2]/div[2]/div/div/div[3]/button")  # Login button for HDN374
-    ALGOTEST_LOGIN_BUTTON_HDN374_FALLBACK_LOCATOR = (By.XPATH, "/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[1]/div[2]/div[2]/div/div/div[3]/button")  # Fallback login button for HDN374
+    # These are dynamically generated based on account position in config
+    ACCOUNT_POSITIONS = _accounts_config.get('algotest', {}).get('account_positions', {})
+    
+    @classmethod
+    def get_algotest_login_button_locator(cls, account_id):
+        """Get the XPath locator for an account's login button based on its position."""
+        position = cls.ACCOUNT_POSITIONS.get(account_id, 1)
+        return (By.XPATH, f"/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[3]/div[2]/div[{position}]/div/div/div[3]/button")
+    
+    @classmethod
+    def get_algotest_login_button_fallback_locator(cls, account_id):
+        """Get the fallback XPath locator for an account's login button."""
+        position = cls.ACCOUNT_POSITIONS.get(account_id, 1)
+        return (By.XPATH, f"/html/body/div[1]/div/div/div/div/div/div[3]/div/div/div/div[1]/div[2]/div[{position}]/div/div/div[3]/button")
 
 # ==========================================================================
 # --- Terminal UI ---
@@ -323,7 +353,7 @@ class AlgoTestBrowserManager:
             return None
     
     def login_zerodha(self, driver: webdriver.Chrome, credentials: Dict[str, str]) -> bool:
-        """Login to Zerodha BU0542 account."""
+        """Login to Zerodha account."""
         self.ui.log("Starting Zerodha login process")
         
         try:
@@ -536,16 +566,13 @@ class AlgoTestBrowserManager:
             self.ui.log("Clicked unlisted broker text", "success")
             time.sleep(Config.SHORT_DELAY)
             
-            # Step 4: Click account-specific login button
-            if account_id == "BU0542":
-                login_button_locator = Config.ALGOTEST_LOGIN_BUTTON_BU0542_LOCATOR
-                fallback_locator = Config.ALGOTEST_LOGIN_BUTTON_BU0542_FALLBACK_LOCATOR
-            elif account_id == "HDN374":
-                login_button_locator = Config.ALGOTEST_LOGIN_BUTTON_HDN374_LOCATOR
-                fallback_locator = Config.ALGOTEST_LOGIN_BUTTON_HDN374_FALLBACK_LOCATOR
-            else:
-                self.ui.log(f"Unknown account ID: {account_id}. Skipping account-specific login button.", "warning")
+            # Step 4: Click account-specific login button (dynamic based on config)
+            if account_id not in Config.ACCOUNT_POSITIONS:
+                self.ui.log(f"Account {account_id} not found in account_positions config. Skipping account-specific login button.", "warning")
                 return True
+            
+            login_button_locator = Config.get_algotest_login_button_locator(account_id)
+            fallback_locator = Config.get_algotest_login_button_fallback_locator(account_id)
             
             self.ui.log(f"Looking for login button for {account_id}...")
             account_login_button = None

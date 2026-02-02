@@ -1,0 +1,33 @@
+{
+  "company_account": {
+    "account_id": "YOUR_COMPANY_ACCOUNT_ID",
+    "description": "Primary company trading account"
+  },
+  "my_accounts": {
+    "account_ids": ["YOUR_ACCOUNT_1", "YOUR_ACCOUNT_2"],
+    "description": "Personal trading accounts for parallel login"
+  },
+  "algotest": {
+    "zerodha_accounts": {
+      "YOUR_ACCOUNT_1": 1,
+      "YOUR_ACCOUNT_2": 1
+    },
+    "account_positions": {
+      "YOUR_ACCOUNT_1": 1,
+      "YOUR_ACCOUNT_2": 2
+    },
+    "description": "Accounts for AlgoTest automation (1=enabled, 0=disabled). account_positions maps account to UI position."
+  },
+  "_instructions": {
+    "setup": [
+      "1. Copy this file to 'accounts_config.json'",
+      "2. Replace placeholder values with your actual Zerodha account IDs",
+      "3. The accounts_config.json file is gitignored for security"
+    ],
+    "notes": [
+      "account_id: Your Zerodha user ID (e.g., ABC123)",
+      "account_positions: Position of account in AlgoTest UI (1=first, 2=second, etc.)",
+      "Credentials (password, TOTP) are stored separately in zerodha_credentials.csv"
+    ]
+  }
+}

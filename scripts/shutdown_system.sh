@@ -2,8 +2,10 @@
 # System Shutdown Script for Cron
 # This script safely shuts down the system
 
-# Log file path
-LOG_DIR="/media/chaitanya/NVME_512/zerodha_automation/logs/cron"
+# Log file path (relative to script location)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+LOG_DIR="$PROJECT_DIR/logs/cron"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/shutdown_cron.log"
 ERROR_LOG="$LOG_DIR/shutdown_cron.error.log"

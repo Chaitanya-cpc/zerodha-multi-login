@@ -31,8 +31,8 @@ chmod +x "CronJob Algotest Login/algotest_cron.sh"
 # 2. Edit your crontab
 crontab -e
 
-# 3. Add this line (adjust time as needed):
-45 8 * * * /media/chaitanya/NVME_512/zerodha_automation/CronJob\ Algotest\ Login/algotest_cron.sh
+# 3. Add this line (adjust time and path as needed):
+45 8 * * * /path/to/your/zerodha_automation/CronJob\ Algotest\ Login/algotest_cron.sh
 
 # 4. Save and exit (Ctrl+X, then Y, then Enter for nano)
 ```
@@ -79,7 +79,7 @@ Cron uses 5 fields to specify schedule:
 ### Step 1: Get Full Path to Wrapper Script
 
 ```bash
-cd /media/chaitanya/NVME_512/zerodha_automation
+cd /path/to/your/zerodha_automation
 FULL_PATH="$(pwd)/CronJob Algotest Login/algotest_cron.sh"
 echo "Full path: $FULL_PATH"
 ```
@@ -108,7 +108,7 @@ tail -f logs/cron/algotest_cron.error.log
 crontab -e
 
 # Add the cron job (replace with your actual path)
-45 8 * * * /media/chaitanya/NVME_512/zerodha_automation/CronJob\ Algotest\ Login/algotest_cron.sh
+45 8 * * * /path/to/your/zerodha_automation/CronJob\ Algotest\ Login/algotest_cron.sh
 ```
 
 **Important:** Use escaped spaces or quotes in the path, or use absolute path without spaces.

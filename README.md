@@ -97,7 +97,7 @@ zerodha_automation/
 │   └── README.md
 ├── src/
 │   ├── auto_login.py          # Main multi-account login script (2000+ lines)
-│   ├── open_my_accounts.py    # HDN374 & BU0542 accounts login
+│   ├── open_my_accounts.py    # Personal accounts login (configurable)
 │   ├── open_Company_Account.py  # Legacy company account script
 │   └── __init__.py
 ├── extensions/
@@ -809,7 +809,7 @@ python src/auto_login.py [options]
 
 ### 2. My Accounts: `src/open_my_accounts.py`
 
-**Purpose:** Login to HDN374 and BU0542 accounts in parallel.
+**Purpose:** Login to configured personal accounts in parallel.
 
 **Features:**
 
@@ -826,11 +826,11 @@ python3 src/open_my_accounts.py
 
 ### 3. Legacy Company Account: `src/open_Company_Account.py`
 
-**Purpose:** Legacy script for HDN374 company account with special features.
+**Purpose:** Script for company account with special features.
 
 **Features:**
 
-- Bypasses status filtering (always processes HDN374)
+- Bypasses status filtering (always processes configured company account)
 - Chrome extension support (Trading Algo extension)
 - Beautiful terminal UI with enhanced banners
 - Double-click support with welcome messages
@@ -844,7 +844,7 @@ python3 src/open_Company_Account.py
 
 **Key Differences:**
 
-- Targets single account (HDN374)
+- Targets single account (configured in accounts_config.json)
 - Loads Chrome extensions from user profile
 - Enhanced UI for double-click execution
 - Status-independent processing
@@ -861,7 +861,7 @@ python3 src/open_Company_Account.py
 
 **Features:**
 
-- Zerodha BU0542 account login
+- Zerodha account login (configured accounts)
 - AlgoTest tab opening in same browser
 - AlgoTest login automation
 - Multi-step process tracking
@@ -884,7 +884,7 @@ python "CronJob Algotest Login/algotest_login.py"
 **Process Flow:**
 
 ```
-1. Read Zerodha credentials (BU0542)
+1. Read Zerodha credentials (configured accounts)
 2. Setup Chrome browser
 3. Login to Zerodha
    ├── Enter credentials

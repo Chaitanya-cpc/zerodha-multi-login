@@ -31,12 +31,12 @@
 
 ## 🎯 Overview
 
-This script automates the complete login flow for both Zerodha (BU0542 account) and AlgoTest.in/live platforms. It provides a seamless, automated solution for traders who need to access both platforms simultaneously in a single browser session.
+This script automates the complete login flow for both Zerodha and AlgoTest.in/live platforms. It provides a seamless, automated solution for traders who need to access both platforms simultaneously in a single browser session.
 
 ### Key Highlights
 
 - 🔄 **Multi-Platform Automation** - Zerodha and AlgoTest in one seamless flow
-- 🎯 **Targeted Account** - Specifically designed for BU0542 account
+- 🎯 **Configurable Accounts** - Account IDs loaded from `config/accounts_config.json`
 - 🚀 **Single Browser Session** - Opens AlgoTest in new tab (no separate window)
 - ✨ **Beautiful Terminal UI** - Rich, colorful progress tracking with step-by-step indicators
 - 🔐 **Secure Credential Management** - JSON-based configuration with separate credential files
@@ -50,10 +50,10 @@ This script automates the complete login flow for both Zerodha (BU0542 account) 
 
 | Feature | Description |
 |---------|-------------|
-| **Zerodha Login** | Automatic login to BU0542 account with 2FA support |
+| **Zerodha Login** | Automatic login to configured accounts with 2FA support |
 | **Tab Management** | Opens AlgoTest in new browser tab (same session) |
 | **AlgoTest Login** | Automated form filling and submission using XPaths |
-| **Status Bypass** | Works regardless of CSV status value for BU0542 |
+| **Status Bypass** | Works regardless of CSV status value for configured accounts |
 | **Error Handling** | Comprehensive error capture and logging |
 | **Progress Tracking** | Real-time step-by-step progress display |
 | **Page Source Debugging** | Saves page source on errors for troubleshooting |
@@ -128,7 +128,7 @@ Complete (Browser stays open)
                           ↓
 ┌─────────────────────────────────────────────────────────┐
 │ STEP 2: Read Credentials                                │
-│   ├── Read BU0542 from config/zerodha_credentials.csv  │
+│   ├── Read accounts from config/zerodha_credentials.csv │
 │   └── Read AlgoTest from algotest_credentials.json     │
 └─────────────────────────────────────────────────────────┘
                           ↓
@@ -140,7 +140,7 @@ Complete (Browser stays open)
 ┌─────────────────────────────────────────────────────────┐
 │ STEP 4: Login to Zerodha                                │
 │   ├── Navigate to kite.zerodha.com                      │
-│   ├── Enter username (BU0542)                           │
+│   ├── Enter username (configured account)                │
 │   ├── Enter password                                    │
 │   ├── Submit login form                                 │
 │   ├── Handle 2FA (TOTP or PIN)                          │
@@ -192,8 +192,8 @@ class Config:
     ZERODHA_LOGIN_URL = "https://kite.zerodha.com/"
     ALGOTEST_LOGIN_URL = "https://algotest.in/live"
     
-    # Zerodha Account
-    ZERODHA_ACCOUNT = "BU0542"
+    # Zerodha Account (loaded from accounts_config.json)
+    ZERODHA_ACCOUNT = "YOUR_ACCOUNT_ID"  # Configured in config/accounts_config.json
     
     # Timeouts
     WEBDRIVER_WAIT_TIMEOUT = 30
@@ -220,7 +220,7 @@ class Config:
 - Configure Zerodha and AlgoTest URLs
 - Set timeouts and delays for operations
 - Define Selenium locators for both platforms
-- Specify target Zerodha account (BU0542)
+- Specify target Zerodha accounts (loaded from accounts_config.json)
 
 ### 2. AlgoTestUI Class
 
@@ -268,10 +268,10 @@ config/zerodha_credentials.csv
     ↓
 Read CSV file
     ↓
-Filter for BU0542 account
+Filter for configured accounts
     ↓
 Return credentials dict
-    ├── user_id: "BU0542"
+    ├── user_id: "YOUR_ACCOUNT_ID"
     ├── password: "***"
     └── pin: "TOTP_SECRET or PIN"
 ```
@@ -290,7 +290,7 @@ Return credentials dict
 ```
 
 **Key Features:**
-- Bypasses status check for BU0542 (always processes)
+- Bypasses status check for configured accounts (always processes)
 - JSON file parsing with error handling
 - Validation of credential structure
 - User-friendly error messages
@@ -321,13 +321,13 @@ class AlgoTestBrowserManager:
 
 #### login_zerodha()
 
-**Purpose:** Complete Zerodha login workflow for BU0542 account.
+**Purpose:** Complete Zerodha login workflow for configured accounts.
 
 **Workflow:**
 ```
 1. Navigate to kite.zerodha.com
 2. Wait for page load
-3. Enter username (BU0542)
+3. Enter username (from config)
 4. Enter password
 5. Click submit button
 6. Handle 2FA
@@ -486,7 +486,7 @@ pip install -r requirements.txt
 
 **Zerodha Credentials:**
 - Already in `config/zerodha_credentials.csv`
-- BU0542 account must be present
+- Configured accounts must be present (set in `config/accounts_config.json`)
 - Status value is ignored (script bypasses filtering)
 
 **AlgoTest Credentials:**
@@ -579,7 +579,7 @@ The script will:
 1. **Display Beautiful Banner** - Welcome screen with project info
 2. **Read Credentials** - Load Zerodha and AlgoTest credentials
 3. **Setup Chrome Browser** - Initialize WebDriver
-4. **Login to Zerodha BU0542** - Complete Zerodha login with 2FA
+4. **Login to Zerodha** - Complete Zerodha login with 2FA
 5. **Open AlgoTest Tab** - Create new tab and navigate to algotest.in/live
 6. **Login to AlgoTest** - Fill and submit AlgoTest login form
 7. **Complete** - Keep browser open for use
@@ -596,7 +596,7 @@ The script will:
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 
-📊 Zerodha Account: BU0542
+📊 Zerodha Account: YOUR_ACCOUNT
 Started at: 2024-01-15 10:30:00
 
 ════════════════════════════════════════════════════════════════
@@ -623,7 +623,7 @@ Started at: 2024-01-15 10:30:00
 ┌─────────────────────────────────────────────────┐
 │ 1. Navigate to kite.zerodha.com                 │
 │ 2. Wait for page to load                        │
-│ 3. Enter username (BU0542)                      │
+│ 3. Enter username (from config)                      │
 │ 4. Enter password                               │
 │ 5. Submit login form                            │
 │ 6. Handle 2FA                                   │
@@ -728,7 +728,7 @@ Started at: 2024-01-15 10:30:00
 - Website changes
 
 **Solutions:**
-- Verify BU0542 credentials in CSV
+- Verify account credentials in CSV
 - Check TOTP secret is correct (Base32 format)
 - Ensure system time is synchronized (critical for TOTP)
 - Try using static PIN instead of TOTP
@@ -752,7 +752,7 @@ Started at: 2024-01-15 10:30:00
 ### Credential File Issues
 
 **Zerodha CSV:**
-- Verify BU0542 account exists in CSV
+- Verify configured accounts exist in CSV
 - Check CSV format (commas, quotes)
 - Ensure proper encoding (UTF-8)
 - Verify headers match exactly
@@ -811,8 +811,8 @@ If AlgoTest website structure changes:
 
 ## 📝 Notes
 
-- This script is designed specifically for BU0542 account
-- Status filtering is bypassed for BU0542
+- This script processes accounts configured in accounts_config.json
+- Status filtering is bypassed for configured accounts
 - Browser remains open after completion
 - Page source is saved on AlgoTest login errors
 - All credential files are gitignored

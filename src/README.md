@@ -6,7 +6,7 @@ This directory contains all Python scripts for the Zerodha automation project.
 
 ### Main Scripts
 - **auto_login.py** - Multi-account login automation (main script)
-- **open_my_accounts.py** - Login to HDN374 and BU0542 accounts (parallel processing)
+- **open_my_accounts.py** - Login to configured personal accounts (parallel processing)
 - **open_Company_Account.py** - Legacy company account login script
 
 ### Cron Jobs
@@ -20,7 +20,7 @@ Run scripts from the project root:
 # Multi-account login
 python3 src/auto_login.py
 
-# My accounts (HDN374 & BU0542)
+# My accounts (configured in accounts_config.json)
 python3 src/open_my_accounts.py
 
 # Legacy company account
